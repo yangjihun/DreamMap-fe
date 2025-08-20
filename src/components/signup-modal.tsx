@@ -1,6 +1,5 @@
-"use client"
-
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -98,6 +97,7 @@ const LOCATIONS = [
 ]
 
 export function SignupModal({ isOpen, onClose }: SignupModalProps) {
+  const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState<SignupStep>("account")
   const [signupData, setSignupData] = useState<SignupData>({
     email: "",
@@ -161,8 +161,8 @@ export function SignupModal({ isOpen, onClose }: SignupModalProps) {
 
   const handleComplete = () => {
     onClose()
-    // TODO: Redirect to dashboard
-    window.location.href = "/dashboard"
+    // Redirect to dashboard
+    navigate("/dashboard")
   }
 
   const resetModal = () => {
