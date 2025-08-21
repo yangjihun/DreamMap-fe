@@ -1,90 +1,66 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog"
-import { X, ChevronRight, ChevronLeft, Check } from "lucide-react"
-
-interface SignupModalProps {
-  isOpen: boolean
-  onClose: () => void
-}
-
-type SignupStep = "account" | "education" | "experience" | "skills" | "location" | "interests" | "complete"
+import React, { useState } from "react";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { Textarea } from "./ui/textarea";
+import { X, ChevronLeft, ChevronRight, Check } from "lucide-react";
 
 interface SignupData {
-  email: string
-  password: string
-  confirmPassword: string
-  name: string
-  school: string
-  major: string
-  experience: string
-  skills: string[]
-  location: string
-  interests: string[]
+  school: string;
+  major: string;
+  experience: string;
+  skills: string[];
+  location: string;
+  desiredJob: string;
 }
 
-const SKILLS_OPTIONS = [
-  "JavaScript",
-  "TypeScript",
-  "React",
-  "Vue.js",
-  "Angular",
-  "Node.js",
-  "Python",
-  "Java",
-  "Spring",
-  "Django",
-  "Flask",
-  "MySQL",
-  "PostgreSQL",
-  "MongoDB",
-  "Redis",
-  "AWS",
-  "Docker",
-  "Kubernetes",
-  "Git",
-  "Linux",
-  "C++",
-  "C#",
-  ".NET",
-  "Go",
-  "Rust",
-]
+interface SignupModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onComplete: (data: SignupData) => void;
+}
 
-const INTEREST_OPTIONS = [
-  "프론트엔드 개발자",
-  "백엔드 개발자",
-  "풀스택 개발자",
-  "모바일 개발자",
-  "DevOps 엔지니어",
-  "데이터 사이언티스트",
-  "머신러닝 엔지니어",
-  "AI 엔지니어",
-  "보안 전문가",
-  "QA 엔지니어",
-  "프로덕트 매니저",
-  "기술 리드",
-  "CTO",
-  "스타트업 창업",
-  "프리랜서",
-]
+const steps = [
+  { id: 1, title: "학교 정보", description: "학력 정보를 입력해주세요" },
+  { id: 2, title: "전공", description: "전공 분야를 선택해주세요" },
+  { id: 3, title: "경력", description: "경력 사항을 입력해주세요" },
+  { id: 4, title: "스킬", description: "보유 스킬을 입력해주세요" },
+  { id: 5, title: "지역", description: "희망 지역을 선택해주세요" },
+  { id: 6, title: "관심 직무", description: "희망 직무를 선택해주세요" },
+];
 
-const LOCATIONS = [
+const majors = [
+  "컴퓨터공학",
+  "소프트웨어공학",
+  "정보통신공학",
+  "전자공학",
+  "데이터사이언스",
+  "인공지능",
+  "웹개발",
+  "모바일개발",
+  "시스템엔지니어링",
+  "보안",
+  "기타",
+];
+
+const locations = [
   "서울",
-  "경기",
-  "인천",
   "부산",
   "대구",
+  "인천",
   "광주",
   "대전",
   "울산",
   "세종",
+  "경기",
   "강원",
   "충북",
   "충남",
@@ -93,351 +69,321 @@ const LOCATIONS = [
   "경북",
   "경남",
   "제주",
-  "해외",
-]
+];
 
-export function SignupModal({ isOpen, onClose }: SignupModalProps) {
-  const navigate = useNavigate()
-  const [currentStep, setCurrentStep] = useState<SignupStep>("account")
+const jobCategories = [
+  "프론트엔드 개발자",
+  "백엔드 개발자",
+  "풀스택 개발자",
+  "모바일 앱 개발자",
+  "데이터 엔지니어",
+  "데이터 사이언티스트",
+  "AI/ML 엔지니어",
+  "DevOps 엔지니어",
+  "시스템 엔지니어",
+  "보안 엔지니어",
+  "QA 엔지니어",
+  "프로덕트 매니저",
+];
+
+export default function SignupModal({
+  isOpen,
+  onClose,
+  onComplete,
+}: SignupModalProps) {
+  const [currentStep, setCurrentStep] = useState(1);
   const [signupData, setSignupData] = useState<SignupData>({
-    email: "",
-    password: "",
-    confirmPassword: "",
-    name: "",
     school: "",
     major: "",
     experience: "",
     skills: [],
     location: "",
-    interests: [],
-  })
+    desiredJob: "",
+  });
 
-  const steps: { key: SignupStep; title: string; description: string }[] = [
-    { key: "account", title: "계정 정보", description: "기본 계정 정보를 입력해주세요" },
-    { key: "education", title: "학교/전공", description: "교육 배경을 알려주세요" },
-    { key: "experience", title: "경력", description: "경력 사항을 입력해주세요" },
-    { key: "skills", title: "스킬", description: "보유 기술을 선택해주세요" },
-    { key: "location", title: "지역", description: "희망 근무 지역을 선택해주세요" },
-    { key: "interests", title: "관심 직무", description: "관심있는 직무를 선택해주세요" },
-    { key: "complete", title: "완료", description: "회원가입이 완료되었습니다" },
-  ]
+  const [skillInput, setSkillInput] = useState("");
 
-  const currentStepIndex = steps.findIndex((step) => step.key === currentStep)
-  const currentStepInfo = steps[currentStepIndex]
+  if (!isOpen) return null;
 
   const handleNext = () => {
-    if (currentStepIndex < steps.length - 1) {
-      setCurrentStep(steps[currentStepIndex + 1].key)
+    if (currentStep < steps.length) {
+      setCurrentStep(currentStep + 1);
     }
-  }
+  };
 
-  const handlePrevious = () => {
-    if (currentStepIndex > 0) {
-      setCurrentStep(steps[currentStepIndex - 1].key)
+  const handlePrev = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
     }
-  }
-
-  const handleSkillToggle = (skill: string) => {
-    setSignupData((prev) => ({
-      ...prev,
-      skills: prev.skills.includes(skill) ? prev.skills.filter((s) => s !== skill) : [...prev.skills, skill],
-    }))
-  }
-
-  const handleInterestToggle = (interest: string) => {
-    setSignupData((prev) => ({
-      ...prev,
-      interests: prev.interests.includes(interest)
-        ? prev.interests.filter((i) => i !== interest)
-        : [...prev.interests, interest],
-    }))
-  }
-
-  const handleSubmit = () => {
-    // TODO: Implement signup logic
-    console.log("Signup data:", signupData)
-    setCurrentStep("complete")
-  }
+  };
 
   const handleComplete = () => {
-    onClose()
-    // Redirect to dashboard
-    navigate("/dashboard")
-  }
+    onComplete(signupData);
+    onClose();
+  };
 
-  const resetModal = () => {
-    setCurrentStep("account")
+  const addSkill = () => {
+    if (skillInput.trim() && !signupData.skills.includes(skillInput.trim())) {
+      setSignupData({
+        ...signupData,
+        skills: [...signupData.skills, skillInput.trim()],
+      });
+      setSkillInput("");
+    }
+  };
+
+  const removeSkill = (skill: string) => {
     setSignupData({
-      email: "",
-      password: "",
-      confirmPassword: "",
-      name: "",
-      school: "",
-      major: "",
-      experience: "",
-      skills: [],
-      location: "",
-      interests: [],
-    })
-  }
+      ...signupData,
+      skills: signupData.skills.filter((s) => s !== skill),
+    });
+  };
 
-  const handleClose = () => {
-    resetModal()
-    onClose()
-  }
-
-  if (!isOpen) return null
-
-  return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogOverlay className="bg-black/50" />
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-background border border-border">
-        <div className="flex items-center justify-between p-6 border-b border-border">
-          <div>
-            <h2 className="text-2xl font-bold font-serif text-foreground">{currentStepInfo.title}</h2>
-            <p className="text-muted-foreground mt-1">{currentStepInfo.description}</p>
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="school">학교명</Label>
+              <Input
+                id="school"
+                placeholder="졸업/재학 중인 학교를 입력하세요"
+                value={signupData.school}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setSignupData({ ...signupData, school: e.target.value })
+                }
+              />
+            </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleClose}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="px-6 py-4">
-          <div className="flex items-center space-x-2 mb-2">
-            {steps.slice(0, -1).map((step, index) => (
-              <div key={step.key} className="flex items-center">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    index < currentStepIndex
-                      ? "bg-primary text-primary-foreground"
-                      : index === currentStepIndex
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {index < currentStepIndex ? <Check className="h-4 w-4" /> : index + 1}
-                </div>
-                {index < steps.length - 2 && (
-                  <div className={`w-12 h-0.5 mx-2 ${index < currentStepIndex ? "bg-primary" : "bg-muted"}`} />
-                )}
-              </div>
-            ))}
+        );
+      case 2:
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="major">전공 분야</Label>
+              <Select
+                value={signupData.major}
+                onValueChange={(value: string) =>
+                  setSignupData({ ...signupData, major: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="전공을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {majors.map((major) => (
+                    <SelectItem key={major} value={major}>
+                      {major}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {currentStepIndex + 1} / {steps.length - 1} 단계
-          </p>
-        </div>
-
-        <div className="px-6 pb-6">
-          {/* Account Step */}
-          {currentStep === "account" && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">이름</Label>
-                <Input
-                  id="name"
-                  value={signupData.name}
-                  onChange={(e) => setSignupData((prev) => ({ ...prev, name: e.target.value }))}
-                  placeholder="홍길동"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">이메일</Label>
-                <Input
-                  id="signup-email"
-                  type="email"
-                  value={signupData.email}
-                  onChange={(e) => setSignupData((prev) => ({ ...prev, email: e.target.value }))}
-                  placeholder="your@email.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-password">비밀번호</Label>
-                <Input
-                  id="signup-password"
-                  type="password"
-                  value={signupData.password}
-                  onChange={(e) => setSignupData((prev) => ({ ...prev, password: e.target.value }))}
-                  placeholder="••••••••"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">비밀번호 확인</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={signupData.confirmPassword}
-                  onChange={(e) => setSignupData((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                  placeholder="••••••••"
-                />
-              </div>
+        );
+      case 3:
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="experience">경력 사항</Label>
+              <Textarea
+                id="experience"
+                placeholder="보유한 경력이나 프로젝트 경험을 입력하세요"
+                value={signupData.experience}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  setSignupData({ ...signupData, experience: e.target.value })
+                }
+                rows={4}
+              />
             </div>
-          )}
-
-          {/* Education Step */}
-          {currentStep === "education" && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="school">학교</Label>
+          </div>
+        );
+      case 4:
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="skills">보유 스킬</Label>
+              <div className="flex space-x-2">
                 <Input
-                  id="school"
-                  value={signupData.school}
-                  onChange={(e) => setSignupData((prev) => ({ ...prev, school: e.target.value }))}
-                  placeholder="예: 서울대학교, 고려대학교, 연세대학교"
+                  id="skills"
+                  placeholder="스킬을 입력하고 Enter를 누르세요"
+                  value={skillInput}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setSkillInput(e.target.value)
+                  }
+                  onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                    e.key === "Enter" && addSkill()
+                  }
                 />
+                <Button type="button" onClick={addSkill} size="sm">
+                  추가
+                </Button>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="major">전공</Label>
-                <Input
-                  id="major"
-                  value={signupData.major}
-                  onChange={(e) => setSignupData((prev) => ({ ...prev, major: e.target.value }))}
-                  placeholder="예: 컴퓨터공학과, 소프트웨어학과, 정보통신공학과"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Experience Step */}
-          {currentStep === "experience" && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="experience">경력 사항</Label>
-                <Textarea
-                  id="experience"
-                  value={signupData.experience}
-                  onChange={(e) => setSignupData((prev) => ({ ...prev, experience: e.target.value }))}
-                  placeholder="경력이 있다면 간단히 설명해주세요. 신입이라면 '신입'이라고 입력해주세요."
-                  rows={4}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Skills Step */}
-          {currentStep === "skills" && (
-            <div className="space-y-4">
-              <div>
-                <Label className="text-base font-medium">보유 기술 스택</Label>
-                <p className="text-sm text-muted-foreground mb-4">해당하는 기술들을 선택해주세요</p>
-                <div className="flex flex-wrap gap-2">
-                  {SKILLS_OPTIONS.map((skill) => (
-                    <Badge
-                      key={skill}
-                      variant={signupData.skills.includes(skill) ? "default" : "outline"}
-                      className={`cursor-pointer transition-colors ${
-                        signupData.skills.includes(skill)
-                          ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                          : "hover:bg-accent"
-                      }`}
-                      onClick={() => handleSkillToggle(skill)}
+              {signupData.skills.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {signupData.skills.map((skill, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
                     >
                       {skill}
-                    </Badge>
+                      <button
+                        type="button"
+                        onClick={() => removeSkill(skill)}
+                        className="ml-2 text-blue-600 hover:text-blue-800"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
                   ))}
                 </div>
-              </div>
+              )}
             </div>
-          )}
-
-          {/* Location Step */}
-          {currentStep === "location" && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>희망 근무 지역</Label>
-                <Select
-                  value={signupData.location}
-                  onValueChange={(value) => setSignupData((prev) => ({ ...prev, location: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="지역을 선택해주세요" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LOCATIONS.map((location) => (
-                      <SelectItem key={location} value={location}>
-                        {location}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-
-          {/* Interests Step */}
-          {currentStep === "interests" && (
-            <div className="space-y-4">
-              <div>
-                <Label className="text-base font-medium">관심 직무</Label>
-                <p className="text-sm text-muted-foreground mb-4">관심있는 직무를 선택해주세요 (복수 선택 가능)</p>
-                <div className="flex flex-wrap gap-2">
-                  {INTEREST_OPTIONS.map((interest) => (
-                    <Badge
-                      key={interest}
-                      variant={signupData.interests.includes(interest) ? "default" : "outline"}
-                      className={`cursor-pointer transition-colors ${
-                        signupData.interests.includes(interest)
-                          ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                          : "hover:bg-accent"
-                      }`}
-                      onClick={() => handleInterestToggle(interest)}
-                    >
-                      {interest}
-                    </Badge>
+          </div>
+        );
+      case 5:
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="location">희망 지역</Label>
+              <Select
+                value={signupData.location}
+                onValueChange={(value: string) =>
+                  setSignupData({ ...signupData, location: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="희망 지역을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map((location) => (
+                    <SelectItem key={location} value={location}>
+                      {location}
+                    </SelectItem>
                   ))}
-                </div>
-              </div>
+                </SelectContent>
+              </Select>
             </div>
-          )}
-
-          {/* Complete Step */}
-          {currentStep === "complete" && (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Check className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">회원가입 완료!</h3>
-              <p className="text-muted-foreground mb-6">
-                환영합니다! 이제 AI 레쥬메 분석 서비스를 이용하실 수 있습니다.
-              </p>
-              <Button onClick={handleComplete} className="bg-primary text-primary-foreground hover:bg-primary/90">
-                대시보드로 이동
-              </Button>
+          </div>
+        );
+      case 6:
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="desiredJob">희망 직무</Label>
+              <Select
+                value={signupData.desiredJob}
+                onValueChange={(value: string) =>
+                  setSignupData({ ...signupData, desiredJob: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="희망 직무를 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {jobCategories.map((job) => (
+                    <SelectItem key={job} value={job}>
+                      {job}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
-        </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
-        {/* Navigation Buttons */}
-        {currentStep !== "complete" && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+  const isStepValid = () => {
+    switch (currentStep) {
+      case 1:
+        return signupData.school.trim() !== "";
+      case 2:
+        return signupData.major !== "";
+      case 3:
+        return signupData.experience.trim() !== "";
+      case 4:
+        return signupData.skills.length > 0;
+      case 5:
+        return signupData.location !== "";
+      case 6:
+        return signupData.desiredJob !== "";
+      default:
+        return false;
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <Card className="w-full max-w-2xl mx-4">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <div>
+            <CardTitle className="text-xl font-semibold">
+              {steps[currentStep - 1].title}
+            </CardTitle>
+            <p className="text-sm text-gray-600 mt-1">
+              {steps[currentStep - 1].description}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </CardHeader>
+
+        <CardContent className="space-y-6">
+          {/* Progress Bar */}
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${(currentStep / steps.length) * 100}%` }}
+            />
+          </div>
+
+          {/* Step Content */}
+          {renderStepContent()}
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between pt-4">
             <Button
               variant="outline"
-              onClick={handlePrevious}
-              disabled={currentStepIndex === 0}
-              className="flex items-center space-x-2 bg-transparent"
+              onClick={handlePrev}
+              disabled={currentStep === 1}
+              className="flex items-center"
             >
-              <ChevronLeft className="h-4 w-4" />
-              <span>이전</span>
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              이전
             </Button>
 
-            {currentStepIndex === steps.length - 2 ? (
-              <Button
-                onClick={handleSubmit}
-                className="flex items-center space-x-2 bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                <span>가입 완료</span>
-                <Check className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button onClick={handleNext} className="flex items-center space-x-2">
-                <span>다음</span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            )}
+            <div className="flex space-x-2">
+              {currentStep < steps.length ? (
+                <Button
+                  onClick={handleNext}
+                  disabled={!isStepValid()}
+                  className="flex items-center"
+                >
+                  다음
+                  <ChevronRight className="h-4 w-4 mr-2" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleComplete}
+                  disabled={!isStepValid()}
+                  className="flex items-center bg-green-600 hover:bg-green-700"
+                >
+                  <Check className="h-4 w-4 mr-2" />
+                  완료
+                </Button>
+              )}
+            </div>
           </div>
-        )}
-      </DialogContent>
-    </Dialog>
-  )
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
