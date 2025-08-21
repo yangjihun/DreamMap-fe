@@ -1,367 +1,249 @@
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Progress } from "@/components/ui/progress"
+import React, { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Button } from "../components/ui/button";
 import {
-  ArrowLeft,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { Separator } from "@radix-ui/react-separator";
+import {
+  FileText,
+  Download,
   Sparkles,
   CheckCircle,
   AlertCircle,
-  Download,
-  FileText,
-  Target,
-  Award,
-  Zap,
+  Loader2,
+  Star,
   TrendingUp,
-} from "lucide-react"
-import { Link, useParams, useNavigate } from "react-router-dom"
-import { Helmet } from "react-helmet-async"
+} from "lucide-react";
 
-// interface FeedbackItem {
-//   type: "strength" | "improvement" | "suggestion"
-//   category: string
-//   title: string
-//   description: string
-//   priority: "high" | "medium" | "low"
-// }
+interface AnalysisResult {
+  id: string;
+  originalResume: string;
+  feedback: string[];
+  improvedResume: string;
+  score: number;
+  status: "analyzing" | "completed" | "failed";
+}
 
 export default function AnalysisPage() {
-  const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [isGenerated, setIsGenerated] = useState(false)
-  const [showGrowthPrompt, setShowGrowthPrompt] = useState(true)
+  const { id } = useParams<{ id: string }>();
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult>({
+    id: id || "1",
+    originalResume: `[이력서 내용]
+• 웹 개발 경험 2년
+• React, Node.js, MongoDB 사용
+• 프로젝트 A, B, C 참여`,
+    feedback: [
+      "구체적인 성과 지표가 부족합니다 (예: 사용자 수, 성능 개선률 등)",
+      "기술 스택의 깊이를 더 자세히 설명해주세요",
+      "프로젝트에서 해결한 문제점과 해결 방법을 구체적으로 작성해주세요",
+      "협업 경험과 팀 기여도에 대한 설명이 필요합니다",
+    ],
+    improvedResume: `[개선된 이력서]
+• 웹 개발 경험 2년
+• React, Node.js, MongoDB 전문가
+• 프로젝트 A: 사용자 10,000명 달성, 페이지 로딩 속도 40% 개선
+• 프로젝트 B: 팀 리더로서 5명과 협업, 3개월 내 완성
+• 프로젝트 C: 마이크로서비스 아키텍처 설계 및 구현`,
+    score: 85,
+    status: "completed",
+  });
 
-  const handleGenerateImproved = () => {
-    setIsGenerating(true)
-    // Simulate AI generation process
+  const [isGenerating, setIsGenerating] = useState(false);
+  const navigate = useNavigate();
+
+  const handleMergeFeedback = async () => {
+    setIsGenerating(true);
+    // AI가 피드백을 융합하여 새로운 레쥬메를 생성하는 로직
     setTimeout(() => {
-      setIsGenerating(false)
-      setIsGenerated(true)
-    }, 3000)
-  }
+      setAnalysisResult((prev) => ({
+        ...prev,
+        improvedResume: `[AI가 생성한 최종 이력서]
+• 웹 개발 경험 2년
+• React, Node.js, MongoDB 전문가
+• 프로젝트 A: 사용자 10,000명 달성, 페이지 로딩 속도 40% 개선
+• 프로젝트 B: 팀 리더로서 5명과 협업, 3개월 내 완성
+• 프로젝트 C: 마이크로서비스 아키텍처 설계 및 구현
+• 협업: Git, Jira를 활용한 체계적인 프로젝트 관리
+• 성과: 총 3개 프로젝트 완성, 팀 생산성 25% 향상`,
+        score: 95,
+      }));
+      setIsGenerating(false);
+    }, 3000);
+  };
 
   const handleDownload = () => {
-    // TODO: Implement actual file download
-    console.log("Downloading improved resume...")
-  }
+    const element = document.createElement("a");
+    const file = new Blob([analysisResult.improvedResume], {
+      type: "text/plain",
+    });
+    element.href = URL.createObjectURL(file);
+    element.download = `improved-resume-${id}.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
 
-  const handleStartGrowthJourney = () => {
-    navigate(`/roadmap/${id}`)
-  }
+  const handleNavigateToRoadmap = () => {
+    navigate(`/roadmap/${id}`);
+  };
 
-  // Helper functions for feedback rendering
-  // These will be used when implementing the full feedback display functionality
+  const getScoreColor = (score: number) => {
+    if (score >= 90) return "text-green-600 bg-green-100";
+    if (score >= 80) return "text-blue-600 bg-blue-100";
+    if (score >= 70) return "text-yellow-600 bg-yellow-100";
+    return "text-red-600 bg-red-100";
+  };
 
-  if (isGenerating) {
-    return (
-      <>
-        <Helmet>
-          <title>개선된 레쥬메 생성 중... - ResumeAI</title>
-          <meta name="description" content="AI가 개선된 레쥬메를 생성하고 있습니다." />
-        </Helmet>
-        
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <Card className="w-full max-w-md border border-border bg-card">
-            <CardContent className="p-8 text-center">
-              <div className="w-16 h-16 mx-auto mb-6 bg-primary/10 rounded-full flex items-center justify-center">
-                <Zap className="h-8 w-8 text-primary animate-pulse" />
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                AI 이력서 분석 결과
+              </h1>
+              <p className="text-gray-600 mt-2">이력서 ID: {id} • 분석 완료</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Badge
+                className={`px-4 py-2 text-lg font-semibold ${getScoreColor(
+                  analysisResult.score
+                )}`}
+              >
+                <Star className="h-4 w-4 mr-2" />
+                {analysisResult.score}점
+              </Badge>
+              <Button
+                onClick={handleDownload}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                다운로드
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* 원본 이력서 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <FileText className="h-5 w-5 mr-2" />
+                원본 이력서
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono">
+                  {analysisResult.originalResume}
+                </pre>
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">AI가 개선된 레쥬메를 생성 중입니다</h3>
-              <p className="text-muted-foreground mb-6">피드백을 반영하여 더 나은 레쥬메를 만들고 있어요.</p>
-              <div className="w-full bg-muted rounded-full h-2">
-                <div className="bg-primary h-2 rounded-full animate-pulse" style={{ width: "80%" }}></div>
+            </CardContent>
+          </Card>
+
+          {/* AI 피드백 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <AlertCircle className="h-5 w-5 mr-2 text-orange-600" />
+                AI 피드백
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {analysisResult.feedback.map((feedback, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start space-x-3 p-3 bg-orange-50 rounded-lg"
+                  >
+                    <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-sm text-orange-800">{feedback}</p>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
         </div>
-      </>
-    )
-  }
 
-  return (
-    <>
-      <Helmet>
-        <title>{`분석 결과 ${id} - ResumeAI`}</title>
-        <meta name="description" content="AI가 분석한 레쥬메 결과를 확인하고 개선된 버전을 받아보세요" />
-      </Helmet>
-      
-      <div className="min-h-screen bg-background">
-        {/* Header */}
-        <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/dashboard"
-                className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
+        <Separator className="my-8" />
+
+        {/* 개선된 이력서 */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Sparkles className="h-5 w-5 mr-2 text-purple-600" />
+              개선된 이력서
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-purple-50 p-4 rounded-lg mb-4">
+              <pre className="whitespace-pre-wrap text-sm text-purple-800 font-mono">
+                {analysisResult.improvedResume}
+              </pre>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Badge className="px-3 py-1 bg-green-100 text-green-800">
+                  <CheckCircle className="h-4 w-4 mr-1" />
+                  개선 완료
+                </Badge>
+                <span className="text-sm text-gray-600">
+                  점수: {analysisResult.score}점
+                </span>
+              </div>
+
+              <Button
+                onClick={handleMergeFeedback}
+                disabled={isGenerating}
+                className="bg-purple-600 hover:bg-purple-700"
               >
-                <ArrowLeft className="h-4 w-4" />
-                <span>대시보드로 돌아가기</span>
-              </Link>
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    AI 분석 중...
+                  </>
+                ) : (
+                  <>
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    피드백 융합하기
+                  </>
+                )}
+              </Button>
             </div>
-            <div className="flex items-center space-x-2">
-              <Sparkles className="h-8 w-8 text-foreground" />
-              <h1 className="text-2xl font-bold font-serif text-foreground">ResumeAI</h1>
-            </div>
-          </div>
-        </header>
+          </CardContent>
+        </Card>
 
-        <main className="container mx-auto px-4 py-8 max-w-6xl">
-          {/* Header Section */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-3xl font-bold font-serif text-foreground mb-2">분석 결과 #{id}</h2>
-                <p className="text-muted-foreground">분석 완료: 2024년 1월 15일</p>
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold text-foreground mb-1">78/100</div>
-                <p className="text-muted-foreground">종합 점수</p>
-              </div>
-            </div>
-
-            {/* Overall Score Progress */}
-            <Card className="border border-border bg-card">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-foreground">종합 평가</h3>
-                  <Badge className="bg-green-100 text-green-800">우수</Badge>
-                </div>
-                <Progress value={78} className="h-3" />
-              </CardContent>
-            </Card>
-          </div>
-
-          <Tabs defaultValue="feedback" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="feedback">AI 피드백</TabsTrigger>
-              <TabsTrigger value="categories">카테고리별 분석</TabsTrigger>
-              <TabsTrigger value="improved">개선된 레쥬메</TabsTrigger>
-            </TabsList>
-
-            {/* Feedback Tab */}
-            <TabsContent value="feedback" className="space-y-4">
-              <div className="grid gap-4">
-                <Card className="border bg-green-50">
-                  <CardContent className="p-6">
-                    <div className="flex items-start space-x-4">
-                      <div className="flex-shrink-0 mt-1">
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-2">
-                            <h4 className="font-semibold text-foreground">최신 기술 스택 보유</h4>
-                            <Badge variant="outline" className="text-xs">
-                              기술 스택
-                            </Badge>
-                          </div>
-                          <Badge className="bg-red-100 text-red-800">높음</Badge>
-                        </div>
-                        <p className="text-muted-foreground">
-                          React, TypeScript, Next.js 등 현재 시장에서 요구되는 최신 기술들을 잘 갖추고 있습니다.
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {/* 더 많은 피드백 항목들... */}
-                <Card className="border bg-orange-50">
-                  <CardContent className="p-6">
-                    <div className="flex items-start space-x-4">
-                      <div className="flex-shrink-0 mt-1">
-                        <AlertCircle className="h-5 w-5 text-orange-600" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-2">
-                            <h4 className="font-semibold text-foreground">프로젝트 성과 구체화 필요</h4>
-                            <Badge variant="outline" className="text-xs">
-                              경력 기술
-                            </Badge>
-                          </div>
-                          <Badge className="bg-red-100 text-red-800">높음</Badge>
-                        </div>
-                        <p className="text-muted-foreground">
-                          프로젝트 경험은 풍부하지만, 구체적인 성과나 기여도가 명시되지 않았습니다. 수치화된 결과를
-                          추가하세요.
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            {/* Categories Tab */}
-            <TabsContent value="categories" className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-6">
-                <Card className="border border-border bg-card">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-semibold text-foreground">기술 스택</h4>
-                      <span className="text-2xl font-bold text-foreground">85/100</span>
-                    </div>
-                    <Progress value={85} className="h-2" />
-                  </CardContent>
-                </Card>
-                <Card className="border border-border bg-card">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-semibold text-foreground">경력 기술</h4>
-                      <span className="text-2xl font-bold text-foreground">70/100</span>
-                    </div>
-                    <Progress value={70} className="h-2" />
-                  </CardContent>
-                </Card>
-                <Card className="border border-border bg-card">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-semibold text-foreground">자기소개</h4>
-                      <span className="text-2xl font-bold text-foreground">75/100</span>
-                    </div>
-                    <Progress value={75} className="h-2" />
-                  </CardContent>
-                </Card>
-                <Card className="border border-border bg-card">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-semibold text-foreground">학력</h4>
-                      <span className="text-2xl font-bold text-foreground">90/100</span>
-                    </div>
-                    <Progress value={90} className="h-2" />
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            {/* Improved Resume Tab */}
-            <TabsContent value="improved" className="space-y-4">
-              {!isGenerated ? (
-                <Card className="border border-border bg-card">
-                  <CardContent className="p-8 text-center">
-                    <div className="w-16 h-16 mx-auto mb-6 bg-primary/10 rounded-full flex items-center justify-center">
-                      <Target className="h-8 w-8 text-primary" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-foreground mb-4">AI가 개선된 레쥬메를 생성해드립니다</h3>
-                    <p className="text-muted-foreground mb-6">
-                      분석 결과를 바탕으로 더 나은 레쥬메를 자동으로 작성해드릴게요. 피드백이 모두 반영된 완성도 높은
-                      레쥬메를 받아보세요.
-                    </p>
-                    <Button
-                      onClick={handleGenerateImproved}
-                      className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-3 text-lg font-semibold"
-                    >
-                      <Zap className="mr-2 h-5 w-5" />
-                      피드백 융합시키기
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-6">
-                  <Card className="border border-green-200 bg-green-50">
-                    <CardContent className="p-6">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                          <Award className="h-6 w-6 text-green-600" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-green-800 mb-1">개선된 레쥬메가 완성되었습니다!</h3>
-                          <p className="text-green-700">AI가 모든 피드백을 반영하여 더 나은 레쥬메를 생성했습니다.</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border border-border bg-card">
-                    <CardHeader>
-                      <CardTitle className="flex items-center space-x-2">
-                        <FileText className="h-5 w-5" />
-                        <span>개선된 레쥬메 미리보기</span>
-                      </CardTitle>
-                      <CardDescription>AI가 피드백을 반영하여 개선한 레쥬메입니다.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="bg-muted/30 rounded-lg p-6 mb-6">
-                        <div className="space-y-4 text-sm">
-                          <div>
-                            <h4 className="font-semibold text-foreground mb-2">홍길동</h4>
-                            <p className="text-muted-foreground">프론트엔드 개발자 | React 전문가</p>
-                          </div>
-                          <div>
-                            <h5 className="font-medium text-foreground mb-1">핵심 역량</h5>
-                            <p className="text-muted-foreground">
-                              • React, TypeScript, Next.js를 활용한 3년간의 실무 경험
-                              <br />• 사용자 경험 개선을 통해 전환율 25% 향상 달성
-                              <br />• GitHub: github.com/hongildong (50+ 프로젝트, 200+ 스타)
-                            </p>
-                          </div>
-                          <div>
-                            <h5 className="font-medium text-foreground mb-1">주요 프로젝트</h5>
-                            <p className="text-muted-foreground">
-                              • E-commerce 플랫폼 개발: 월 활성 사용자 10,000명 달성
-                              <br />• 관리자 대시보드 구축: 업무 효율성 40% 개선
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex space-x-4">
-                        <Button
-                          onClick={handleDownload}
-                          className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
-                        >
-                          <Download className="mr-2 h-4 w-4" />
-                          PDF 다운로드
-                        </Button>
-                        <Button variant="outline" className="flex-1 bg-transparent">
-                          <FileText className="mr-2 h-4 w-4" />
-                          Word 다운로드
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Growth Prompt Section */}
-                  {showGrowthPrompt && (
-                    <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
-                      <CardContent className="p-8 text-center">
-                        <div className="w-16 h-16 mx-auto mb-6 bg-primary/10 rounded-full flex items-center justify-center">
-                          <TrendingUp className="h-8 w-8 text-primary" />
-                        </div>
-                        <h3 className="text-2xl font-bold font-serif text-foreground mb-4">더 성장하길 원하시나요?</h3>
-                        <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                          AI가 당신의 목표 직무에 맞는 맞춤형 성장 로드맵을 제공해드립니다. 단계별 학습 계획과 지역별 교육
-                          프로그램을 추천받아 체계적으로 성장해보세요.
-                        </p>
-                        <div className="flex justify-center space-x-4">
-                          <Button
-                            onClick={handleStartGrowthJourney}
-                            className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-3 text-lg font-semibold"
-                          >
-                            <TrendingUp className="mr-2 h-5 w-5" />
-                            성장 여정 시작하기
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={() => setShowGrowthPrompt(false)}
-                            className="px-8 py-3 text-lg bg-transparent"
-                          >
-                            나중에 하기
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </main>
+        {/* 성장 제안 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <TrendingUp className="h-5 w-5 mr-2 text-green-600" />더
+              성장하시겠습니까?
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-700 mb-4">
+              현재 선택하신 IT 직업에 필요한 커리어 로드맵을 AI가 그려드립니다.
+              지역을 고려한 스터디 그룹과 부트캠프를 추천해드려요!
+            </p>
+            <Button
+              onClick={handleNavigateToRoadmap}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              로드맵 생성하기
+            </Button>
+          </CardContent>
+        </Card>
       </div>
-    </>
-  )
+    </div>
+  );
 }

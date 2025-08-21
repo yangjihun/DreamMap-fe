@@ -1,128 +1,135 @@
-import type React from "react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Sparkles, ArrowLeft } from "lucide-react"
-import { Link } from "react-router-dom"
-import { SignupModal } from "@/components/signup-modal"
-import { Helmet } from "react-helmet-async"
+import React, { useState } from "react";
+import { Button } from "../components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { useNavigate } from "react-router-dom";
+import { useAppDispatch } from "../redux/hooks";
+import { setUser } from "../redux/slices/authSlice";
+import SignupModal from "../components/signup-modal";
+
+interface SignupData {
+  school: string;
+  major: string;
+  experience: string;
+  skills: string[];
+  location: string;
+  desiredJob: string;
+}
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isSignupOpen, setIsSignupOpen] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
   const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    // TODO: Implement login logic
-    console.log("Login attempt:", { email, password })
-  }
+    e.preventDefault();
+    // 실제 로그인 로직은 여기에 구현
+    dispatch(setUser({ email, name: "사용자" }));
+    navigate("/dashboard");
+  };
+
+  const handleSignupComplete = (data: SignupData) => {
+    console.log("회원가입 완료:", data);
+    // 실제 회원가입 로직은 여기에 구현
+    // 회원가입 완료 후 자동 로그인
+    dispatch(
+      setUser({
+        email: "newuser@example.com",
+        name: "새로운 사용자",
+        profile: data,
+      })
+    );
+    navigate("/dashboard");
+  };
 
   return (
-    <>
-      <Helmet>
-        <title>로그인 - ResumeAI</title>
-        <meta name="description" content="ResumeAI에 로그인하여 AI 레쥬메 분석을 시작하세요" />
-      </Helmet>
-      
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <Link
-              to="/"
-              className="inline-flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>홈으로 돌아가기</span>
-            </Link>
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              <Sparkles className="h-8 w-8 text-foreground" />
-              <h1 className="text-2xl font-bold font-serif text-foreground">ResumeAI</h1>
-            </div>
-            <p className="text-muted-foreground">당신의 커리어 성장을 시작하세요</p>
-          </div>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <h2 className="mt-6 text-3xl font-bold text-gray-900">로그인</h2>
+          <p className="mt-2 text-sm text-gray-600">
+            계정에 로그인하여 서비스를 이용하세요
+          </p>
+        </div>
 
-          {/* Login Card */}
-          <Card className="border border-border bg-card shadow-lg">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-serif text-foreground">로그인</CardTitle>
-              <CardDescription className="text-muted-foreground">
-                계정에 로그인하여 AI 레쥬메 분석을 시작하세요
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-foreground font-medium">
-                    이메일
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="bg-input border-border focus:ring-ring"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-foreground font-medium">
-                    비밀번호
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="bg-input border-border focus:ring-ring"
-                    required
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-2.5"
-                >
-                  로그인
-                </Button>
-              </form>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center">계정 정보</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div>
+                <Label htmlFor="email">이메일</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="이메일을 입력하세요"
+                  className="mt-1"
+                />
+              </div>
 
-              <div className="mt-6 text-center">
-                <p className="text-muted-foreground mb-4">아직 계정이 없으신가요?</p>
+              <div>
+                <Label htmlFor="password">비밀번호</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="비밀번호를 입력하세요"
+                  className="mt-1"
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                로그인
+              </Button>
+            </form>
+
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">또는</span>
+                </div>
+              </div>
+
+              <div className="mt-6">
                 <Button
+                  type="button"
                   variant="outline"
-                  className="w-full border-border text-foreground hover:bg-accent bg-transparent"
-                  onClick={() => setIsSignupOpen(true)}
+                  className="w-full"
+                  onClick={() => setIsSignupModalOpen(true)}
                 >
                   회원가입
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Footer */}
-          <div className="text-center mt-8">
-            <p className="text-sm text-muted-foreground">
-              로그인하시면{" "}
-              <Link to="/terms" className="underline hover:text-foreground">
-                이용약관
-              </Link>{" "}
-              및{" "}
-              <Link to="/privacy" className="underline hover:text-foreground">
-                개인정보처리방침
-              </Link>
-              에 동의하는 것으로 간주됩니다.
-            </p>
-          </div>
-        </div>
-
-        {/* Signup Modal */}
-        <SignupModal isOpen={isSignupOpen} onClose={() => setIsSignupOpen(false)} />
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    </>
-  )
+
+      <SignupModal
+        isOpen={isSignupModalOpen}
+        onClose={() => setIsSignupModalOpen(false)}
+        onComplete={handleSignupComplete}
+      />
+    </div>
+  );
 }

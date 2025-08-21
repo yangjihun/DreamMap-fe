@@ -1,14 +1,14 @@
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import React from "react";
+import { Button } from "../components/ui/button";
+import { Card, CardContent } from "../components/ui/card";
+import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "../components/ui/dropdown-menu";
 import {
   FileText,
   MoreVertical,
@@ -24,17 +24,11 @@ import {
   Code,
   Briefcase,
   GraduationCap,
-} from "lucide-react"
-import { Link } from "react-router-dom"
-import { Helmet } from "react-helmet-async"
-
-interface Resume {
-  id: string
-  title: string
-  lastModified: string
-  status: "draft" | "analyzed" | "completed"
-  starred: boolean
-}
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAppSelector, useAppDispatch } from "../redux/hooks";
+import { deleteResume, toggleStar } from "../redux/slices/resumeSlice";
+import { logout } from "../redux/slices/authSlice";
 
 const templates = [
   {
@@ -65,236 +59,251 @@ const templates = [
     icon: GraduationCap,
     color: "bg-orange-50 text-orange-600",
   },
-]
+];
 
 export default function DashboardPage() {
-  const [resumes, setResumes] = useState<Resume[]>([
-    {
-      id: "1",
-      title: "프론트엔드 개발자 이력서",
-      lastModified: "2024년 1월 15일",
-      status: "analyzed",
-      starred: true,
-    },
-    {
-      id: "2",
-      title: "풀스택 개발자 지원서",
-      lastModified: "2024년 1월 10일",
-      status: "draft",
-      starred: false,
-    },
-  ])
+  const dispatch = useAppDispatch();
+  const { resumes } = useAppSelector((state) => state.resume);
+  const { user } = useAppSelector((state) => state.auth);
 
   const handleStarToggle = (id: string) => {
-    setResumes((prev) => prev.map((resume) => (resume.id === id ? { ...resume, starred: !resume.starred } : resume)))
-  }
+    dispatch(toggleStar(id));
+  };
 
   const handleDelete = (id: string) => {
-    setResumes((prev) => prev.filter((resume) => resume.id !== id))
-  }
+    dispatch(deleteResume(id));
+  };
 
-  const getStatusColor = (status: Resume["status"]) => {
+  const handleLogout = () => {
+    dispatch(logout());
+  };
+
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "draft":
-        return "text-muted-foreground"
+        return "text-muted-foreground";
       case "analyzed":
-        return "text-blue-600"
+        return "text-blue-600";
       case "completed":
-        return "text-green-600"
+        return "text-green-600";
       default:
-        return "text-muted-foreground"
+        return "text-muted-foreground";
     }
-  }
+  };
 
-  const getStatusText = (status: Resume["status"]) => {
+  const getStatusText = (status: string) => {
     switch (status) {
       case "draft":
-        return "작성 중"
+        return "작성 중";
       case "analyzed":
-        return "분석 완료"
+        return "분석 완료";
       case "completed":
-        return "완성됨"
+        return "완성됨";
       default:
-        return "알 수 없음"
+        return "알 수 없음";
     }
-  }
+  };
 
   return (
-    <>
-      <Helmet>
-        <title>대시보드 - ResumeAI</title>
-        <meta name="description" content="AI 레쥬메 분석 대시보드에서 이력서를 관리하고 분석하세요" />
-      </Helmet>
-      
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Sparkles className="h-7 w-7 text-blue-600" />
-                <h1 className="text-xl font-medium text-gray-900">ResumeAI</h1>
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Sparkles className="h-7 w-7 text-blue-600" />
+              <h1 className="text-xl font-medium text-gray-900">ResumeAI</h1>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="레쥬메 검색"
+                  className="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
               </div>
 
-              <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="레쥬메 검색"
-                    className="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-blue-600 text-white text-sm">홍</AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end">
-                    <div className="flex items-center justify-start gap-2 p-2">
-                      <div className="flex flex-col space-y-1 leading-none">
-                        <p className="font-medium text-gray-900">홍길동</p>
-                        <p className="w-[200px] truncate text-sm text-gray-500">hong@example.com</p>
-                      </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="relative h-8 w-8 rounded-full"
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-blue-600 text-white text-sm">
+                        {user?.name?.charAt(0) || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end">
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      <p className="font-medium text-gray-900">{user?.name}</p>
+                      <p className="w-[200px] truncate text-sm text-gray-500">
+                        {user?.email}
+                      </p>
                     </div>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <User className="mr-2 h-4 w-4" />
-                      <span>프로필</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>설정</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>로그아웃</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>프로필</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>설정</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>로그아웃</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
-        </header>
+        </div>
+      </header>
 
-        <main className="max-w-7xl mx-auto px-6 py-8">
-          <section className="mb-12">
-            <h2 className="text-lg font-medium text-gray-900 mb-6">새 레쥬메 시작하기</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {templates.map((template) => (
-                <Link key={template.id} to="/upload">
-                  <Card className="border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group bg-white">
-                    <CardContent className="p-6 text-center">
-                      <div
-                        className={`w-12 h-12 mx-auto mb-3 rounded-lg flex items-center justify-center ${template.color}`}
-                      >
-                        <template.icon className="h-6 w-6" />
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        <section className="mb-12">
+          <h2 className="text-lg font-medium text-gray-900 mb-6">
+            새 레쥬메 시작하기
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {templates.map((template) => (
+              <Link key={template.id} to="/upload">
+                <Card className="border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group bg-white">
+                  <CardContent className="p-6 text-center">
+                    <div
+                      className={`w-12 h-12 mx-auto mb-3 rounded-lg flex items-center justify-center ${template.color}`}
+                    >
+                      <template.icon className="h-6 w-6" />
+                    </div>
+                    <h3 className="font-medium text-gray-900 mb-1">
+                      {template.title}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {template.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-medium text-gray-900">최근 레쥬메</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-gray-600 hover:text-gray-900"
+            >
+              모두 보기
+            </Button>
+          </div>
+
+          {resumes.length === 0 ? (
+            <div className="text-center py-12">
+              <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                아직 레쥬메가 없습니다
+              </h3>
+              <p className="text-gray-500 mb-6">
+                위의 템플릿을 선택하여 첫 번째 레쥬메를 만들어보세요
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {resumes.map((resume) => (
+                <Card
+                  key={resume.id}
+                  className="border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group bg-white"
+                >
+                  <CardContent className="p-0">
+                    <div className="h-48 bg-gray-50 border-b border-gray-200 flex items-center justify-center">
+                      <div className="w-32 h-40 bg-white border border-gray-200 rounded shadow-sm flex items-center justify-center">
+                        <FileText className="h-8 w-8 text-gray-400" />
                       </div>
-                      <h3 className="font-medium text-gray-900 mb-1">{template.title}</h3>
-                      <p className="text-sm text-gray-500">{template.description}</p>
-                    </CardContent>
-                  </Card>
-                </Link>
+                    </div>
+
+                    <div className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-medium text-gray-900 truncate flex-1 mr-2">
+                          {resume.title}
+                        </h3>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Eye className="mr-2 h-4 w-4" />
+                              <span>보기</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Download className="mr-2 h-4 w-4" />
+                              <span>다운로드</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-red-600 focus:text-red-600"
+                              onClick={() => handleDelete(resume.id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              <span>삭제</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full ${getStatusColor(
+                              resume.status
+                            )} bg-gray-100`}
+                          >
+                            {getStatusText(resume.status)}
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleStarToggle(resume.id)}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Star
+                            className={`h-4 w-4 ${
+                              resume.starred
+                                ? "fill-yellow-400 text-yellow-400"
+                                : "text-gray-400"
+                            }`}
+                          />
+                        </Button>
+                      </div>
+
+                      <p className="text-xs text-gray-500 mt-2">
+                        {resume.lastModified}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-          </section>
-
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-medium text-gray-900">최근 레쥬메</h2>
-              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
-                모두 보기
-              </Button>
-            </div>
-
-            {resumes.length === 0 ? (
-              <div className="text-center py-12">
-                <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">아직 레쥬메가 없습니다</h3>
-                <p className="text-gray-500 mb-6">위의 템플릿을 선택하여 첫 번째 레쥬메를 만들어보세요</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {resumes.map((resume) => (
-                  <Card
-                    key={resume.id}
-                    className="border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group bg-white"
-                  >
-                    <CardContent className="p-0">
-                      <div className="h-48 bg-gray-50 border-b border-gray-200 flex items-center justify-center">
-                        <div className="w-32 h-40 bg-white border border-gray-200 rounded shadow-sm flex items-center justify-center">
-                          <FileText className="h-8 w-8 text-gray-400" />
-                        </div>
-                      </div>
-
-                      <div className="p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-medium text-gray-900 truncate flex-1 mr-2">{resume.title}</h3>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Eye className="mr-2 h-4 w-4" />
-                                <span>보기</span>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Download className="mr-2 h-4 w-4" />
-                                <span>다운로드</span>
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-red-600 focus:text-red-600"
-                                onClick={() => handleDelete(resume.id)}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                <span>삭제</span>
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <span
-                              className={`text-xs px-2 py-1 rounded-full ${getStatusColor(resume.status)} bg-gray-100`}
-                            >
-                              {getStatusText(resume.status)}
-                            </span>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleStarToggle(resume.id)}
-                            className="h-6 w-6 p-0"
-                          >
-                            <Star
-                              className={`h-4 w-4 ${resume.starred ? "fill-yellow-400 text-yellow-400" : "text-gray-400"}`}
-                            />
-                          </Button>
-                        </div>
-
-                        <p className="text-xs text-gray-500 mt-2">{resume.lastModified}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </section>
-        </main>
-      </div>
-    </>
-  )
+          )}
+        </section>
+      </main>
+    </div>
+  );
 }
