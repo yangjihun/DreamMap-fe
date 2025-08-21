@@ -1,4 +1,3 @@
-import React from "react";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import {
@@ -9,10 +8,9 @@ import {
   BookOpen,
   Users,
 } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 export default function RoadmapPage() {
-  const { id } = useParams();
 
   return (
     <div className="min-h-screen bg-gray-50">
