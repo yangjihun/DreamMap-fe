@@ -2,15 +2,32 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Target, BookOpen, Users } from "lucide-react";
 import { RoadmapTabs } from "@/components/roadmap/RoadmapTabs";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RoadmapContent } from "@/components/roadmap/RoadmapContent";
 import { RoadmapHeader } from "@/components/roadmap/RoadmapHeader";
-
-// 타입 정의
-export type PeriodType = "3months" | "6months" | "1year";
+import { Roadmap, RoadmapPeriod } from "@/types/roadmap";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { getRoadmap } from "@/redux/slices/roadmapSlice";
 
 export default function RoadmapPage() {
-  const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>("3months");
+  const dispatch = useAppDispatch();
+  const { roadmapPlans } = useAppSelector((state) => state.roadmap);
+  const [selectedPeriod, setSelectedPeriod] =
+    useState<RoadmapPeriod>("3months");
+  const [currentPlans, setCurrentPlans] = useState<Roadmap | undefined>();
+
+  useEffect(() => {
+    // resume id 넘겨야함
+    dispatch(getRoadmap("68a7dcd1a9308b5fbd2110e3"));
+  }, []);
+
+  useEffect(() => {
+    if (!roadmapPlans) return;
+    const findPlan = roadmapPlans.find(
+      (roadmap) => roadmap.period === selectedPeriod
+    );
+    setCurrentPlans(findPlan);
+  }, [selectedPeriod, roadmapPlans]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -32,7 +49,7 @@ export default function RoadmapPage() {
               selectedPeriod={selectedPeriod}
               setSelectedPeriod={setSelectedPeriod}
             />
-            <RoadmapContent selectedPeriod={selectedPeriod} />
+            <RoadmapContent currentPlans={currentPlans} />
           </div>
 
           {/* 사이드바 */}

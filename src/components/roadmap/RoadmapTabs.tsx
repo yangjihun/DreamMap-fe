@@ -1,27 +1,27 @@
+import { RoadmapPeriod } from "@/types/roadmap";
 import { Button } from "../../components/ui/button";
 import { Calendar, Clock, Award } from "lucide-react";
-import { PeriodType } from "@/pages/RoadmapPage";
 
 export const RoadmapTabs = ({
   selectedPeriod,
   setSelectedPeriod,
 }: {
-  selectedPeriod: PeriodType;
-  setSelectedPeriod: React.Dispatch<React.SetStateAction<PeriodType>>;
+  selectedPeriod: RoadmapPeriod;
+  setSelectedPeriod: React.Dispatch<React.SetStateAction<RoadmapPeriod>>;
 }) => {
   const tabs = [
     {
-      key: "3months" as PeriodType,
+      key: "3months" as RoadmapPeriod,
       label: "3개월 집중 과정",
       icon: <Calendar className="w-4 h-4" />,
     },
     {
-      key: "6months" as PeriodType,
+      key: "6months" as RoadmapPeriod,
       label: "6개월 완성 과정",
       icon: <Clock className="w-4 h-4" />,
     },
     {
-      key: "1year" as PeriodType,
+      key: "1year" as RoadmapPeriod,
       label: "1년 마스터 과정",
       icon: <Award className="w-4 h-4" />,
     },
