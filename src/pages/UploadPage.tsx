@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "../components/ui/button";
 import {
   Card,
@@ -21,6 +21,8 @@ import {
   X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import { getAiReview } from "../redux/slices/resumeSlice";
 
 type UploadMethod = "file" | "text";
 type UploadStatus = "idle" | "uploading" | "analyzing" | "completed" | "failed";
@@ -32,6 +34,8 @@ interface UploadData {
 }
 
 export default function UploadPage() {
+  const dispatch = useAppDispatch();
+  const { loading, resume } = useAppSelector((state) => state.resume);
   const [uploadMethod, setUploadMethod] = useState<UploadMethod>("file");
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>("idle");
   const [uploadData, setUploadData] = useState<UploadData>({
@@ -81,16 +85,29 @@ export default function UploadPage() {
 
     setUploadStatus("analyzing");
 
-    // AI 분석 시뮬레이션
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-
-    setUploadStatus("completed");
-
-    // 분석 완료 후 분석 페이지로 이동
-    setTimeout(() => {
-      navigate("/analysis/1");
-    }, 1500);
+    // AI 분석 요청
+    try {
+      await dispatch(getAiReview("68a7b8d77433cbd888394172"));
+    } catch (error) {
+      setUploadStatus("failed");
+      return;
+    }
   };
+
+  // loading 상태에 따라 uploadStatus 업데이트
+  useEffect(() => {
+    if (uploadStatus === "analyzing") {
+      if (loading) {
+        setUploadStatus("analyzing");
+      } else {
+        setUploadStatus("completed");
+        // 분석 완료 후 분석 페이지로 이동
+        setTimeout(() => {
+          navigate(`/analysis/${resume?.id}`);
+        }, 1500);
+      }
+    }
+  }, [loading, uploadStatus]);
 
   const removeFile = () => {
     setSelectedFile(null);
@@ -132,6 +149,10 @@ export default function UploadPage() {
         return null;
     }
   };
+
+  useEffect(() => {
+    dispatch(getAiReview("68a7b8d77433cbd888394172"));
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">

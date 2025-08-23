@@ -53,6 +53,18 @@ export const getResume = createAsyncThunk(
   }
 );
 
+export const getAiReview = createAsyncThunk(
+  "resume/getAiReview",
+  async (id: any, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`/gemini/review/${id}`);
+      return response.data.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
 const resumeSlice = createSlice({
   name: "resume",
   initialState,
@@ -103,6 +115,17 @@ const resumeSlice = createSlice({
       state.loading = false;
     });
     builder.addCase(getResume.rejected, (state, action) => {
+      state.error = action.payload as string;
+      state.loading = false;
+    });
+    builder.addCase(getAiReview.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(getAiReview.fulfilled, (state, action) => {
+      state.resume = action.payload;
+      state.loading = false;
+    });
+    builder.addCase(getAiReview.rejected, (state, action) => {
       state.error = action.payload as string;
       state.loading = false;
     });
