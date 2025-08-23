@@ -10,17 +10,10 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../redux/hooks";
-import { setUser } from "../redux/slices/authSlice";
+import { setUser, signup } from "../redux/slices/authSlice";
 import SignupModal from "../components/signup-modal";
+import type { SignupData } from "@/components/signup-modal";
 
-interface SignupData {
-  school: string;
-  major: string;
-  experience: string;
-  skills: string[];
-  location: string;
-  desiredJob: string;
-}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -32,23 +25,43 @@ export default function LoginPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     // 실제 로그인 로직은 여기에 구현
-    dispatch(setUser({ email, name: "사용자" }));
+    //dispatch(setUser({ email, name: "사용자" }));
     navigate("/dashboard");
   };
 
-  const handleSignupComplete = (data: SignupData) => {
+
+  // 회원가입 완료 후 자동 로그인
+  const handleSignupComplete = async (data: SignupData) => {
     console.log("회원가입 완료:", data);
-    // 실제 회원가입 로직은 여기에 구현
-    // 회원가입 완료 후 자동 로그인
-    dispatch(
-      setUser({
-        email: "newuser@example.com",
-        name: "새로운 사용자",
-        profile: data,
-      })
-    );
-    navigate("/dashboard");
-  };
+    try {
+      // signup thunk에 전달할 페이로드 생성
+      const backendPayload = { 
+        email: data.email,
+        password: data.password,
+        name: data.name, 
+        school: data.school,
+        major: data.major,
+        career: data.experience,   
+        skill:  data.skills.join(', '), // 배열을 쉼표로 구분된 문자열로 변환
+        region : data.location,        
+        interestJob: data.desiredJob, 
+        loginType : "local",  //일단 하드코딩
+        level : "customer" //일단 하드코딩
+        // 백엔드에서 필요한 기타 필드 (예: level, loginType)도 추가해야 함
+      };
+  
+      // signup thunk를 디스패치하고 결과를 unwrap
+      await dispatch(signup(backendPayload)).unwrap();
+  
+      // 회원가입 성공 후 대시보드로 이동
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("회원가입 실패:", error);
+      // 필요하다면 사용자에게 에러 메시지를 표시
+    } finally {
+      setIsSignupModalOpen(false);
+    }
+  } 
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
