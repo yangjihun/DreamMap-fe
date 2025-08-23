@@ -23,6 +23,5 @@ export interface Resume {
   status: string;
   starred: boolean;
   lastModified: string;
-  createdAt: string;
   updatedAt: string;
 }

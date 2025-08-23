@@ -4,6 +4,7 @@ import api from "@/utils/api";
 
 interface ResumeState {
   resumes: Resume[];
+  resume: Resume | null;
   loading: boolean;
   error: string | null;
 }
@@ -19,7 +20,6 @@ const initialState: ResumeState = {
       status: "draft",
       starred: false,
       lastModified: "2024년 1월 15일",
-      createdAt: "2024년 1월 15일",
       updatedAt: "2024년 1월 15일",
       sessions: [],
     },
@@ -32,21 +32,21 @@ const initialState: ResumeState = {
       status: "draft",
       starred: false,
       lastModified: "2024년 1월 15일",
-      createdAt: "2024년 1월 15일",
       updatedAt: "2024년 1월 15일",
       sessions: [],
     },
   ],
+  resume: null,
   loading: false,
   error: null,
 };
 
 export const getResume = createAsyncThunk(
   "resume/getResume",
-  async (id, { rejectWithValue }) => {
+  async (id: any, { rejectWithValue }) => {
     try {
       const response = await api.get(`/resume/${id}`);
-      return response.data;
+      return response.data.data;
     } catch (error: any) {
       return rejectWithValue(error.response.data);
     }
@@ -99,7 +99,7 @@ const resumeSlice = createSlice({
       state.loading = true;
     });
     builder.addCase(getResume.fulfilled, (state, action) => {
-      state.resumes = action.payload;
+      state.resume = action.payload;
       state.loading = false;
     });
     builder.addCase(getResume.rejected, (state, action) => {

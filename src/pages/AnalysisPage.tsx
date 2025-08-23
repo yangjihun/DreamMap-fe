@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import {
@@ -21,15 +21,19 @@ import {
   Map,
 } from "lucide-react";
 import { Resume, ResumeSession, ResumeItem } from "../types/resume";
+import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import { getResume } from "../redux/slices/resumeSlice";
 
 export default function AnalysisPage() {
+  const dispatch = useAppDispatch();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState<ResumeItem | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const { resume } = useAppSelector((state) => state.resume);
 
   // 백엔드에서 받아올 데이터 (임시로 하드코딩)
-  const resumeData: Resume = {
+  /* const resume: Resume = {
     id: id || "1",
     userId: "user123",
     title: "프론트엔드 개발자 이력서",
@@ -98,6 +102,9 @@ export default function AnalysisPage() {
     createdAt: "2024-01-15T00:00:00.000Z",
     updatedAt: "2024-01-15T00:00:00.000Z",
   };
+  */
+
+  // Use mock data instead of API call
 
   const handleMergeFeedback = async () => {
     setIsGenerating(true);
@@ -111,6 +118,10 @@ export default function AnalysisPage() {
     // 실제로는 백엔드에서 PDF 생성 후 다운로드
     alert("이력서 다운로드가 시작됩니다.");
   };
+
+  useEffect(() => {
+    dispatch(getResume("68a7b8d77433cbd888394172"));
+  }, []);
 
   const getSessionIcon = (key: string) => {
     switch (key) {
@@ -155,16 +166,16 @@ export default function AnalysisPage() {
             </Button>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                {resumeData.title}
+                {resume?.title}
               </h1>
               <p className="text-gray-600 mt-1">AI 분석 결과</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <Badge className="bg-blue-100 text-blue-800">
-              점수: {resumeData.score}/100
+              점수: {resume?.score}/100
             </Badge>
-            <Badge variant="secondary">총 {resumeData.totalCount}자</Badge>
+            <Badge variant="secondary">총 {resume?.totalCount}자</Badge>
           </div>
         </div>
 
@@ -209,58 +220,64 @@ export default function AnalysisPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {resumeData.sessions.map((session, sessionIndex) => (
-                    <div key={sessionIndex} className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`p-2 rounded-lg ${getSessionColor(
-                            session.key
-                          )}`}
-                        >
-                          {getSessionIcon(session.key)}
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-lg text-gray-900">
-                            {session.title}
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            {session.wordCount}자
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3 ml-12">
-                        {session.items.map((item, itemIndex) => (
+                  {resume?.sessions?.map(
+                    (session: ResumeSession, sessionIndex: number) => (
+                      <div key={sessionIndex} className="space-y-4">
+                        <div className="flex items-center gap-3">
                           <div
-                            key={itemIndex}
-                            className={`p-4 border rounded-lg cursor-pointer transition-all hover:border-blue-300 hover:shadow-sm ${
-                              selectedItem === item
-                                ? "border-blue-500 bg-blue-50"
-                                : "border-gray-200"
-                            }`}
-                            onClick={() => setSelectedItem(item)}
+                            className={`p-2 rounded-lg ${getSessionColor(
+                              session.key
+                            )}`}
                           >
-                            {item.title && (
-                              <h4 className="font-medium text-gray-900 mb-2">
-                                {item.title}
-                              </h4>
-                            )}
-                            <p className="text-gray-700 mb-2">{item.text}</p>
-                            {(item.startDate || item.endDate) && (
-                              <div className="flex items-center gap-2 text-sm text-gray-500">
-                                <Clock className="h-4 w-4" />
-                                {item.startDate} - {item.endDate || "현재"}
-                              </div>
-                            )}
+                            {getSessionIcon(session.key)}
                           </div>
-                        ))}
-                      </div>
+                          <div>
+                            <h3 className="font-semibold text-lg text-gray-900">
+                              {session.title}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              {session.wordCount}자
+                            </p>
+                          </div>
+                        </div>
 
-                      {sessionIndex < resumeData.sessions.length - 1 && (
-                        <Separator className="my-6" />
-                      )}
-                    </div>
-                  ))}
+                        <div className="space-y-3 ml-12">
+                          {session.items.map(
+                            (item: ResumeItem, itemIndex: number) => (
+                              <div
+                                key={itemIndex}
+                                className={`p-4 border rounded-lg cursor-pointer transition-all hover:border-blue-300 hover:shadow-sm ${
+                                  selectedItem === item
+                                    ? "border-blue-500 bg-blue-50"
+                                    : "border-gray-200"
+                                }`}
+                                onClick={() => setSelectedItem(item)}
+                              >
+                                {item.title && (
+                                  <h4 className="font-medium text-gray-900 mb-2">
+                                    {item.title}
+                                  </h4>
+                                )}
+                                <p className="text-gray-700 mb-2">
+                                  {item.text}
+                                </p>
+                                {(item.startDate || item.endDate) && (
+                                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                                    <Clock className="h-4 w-4" />
+                                    {item.startDate} - {item.endDate || "현재"}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          )}
+                        </div>
+
+                        {sessionIndex < resume?.sessions?.length - 1 && (
+                          <Separator className="my-6" />
+                        )}
+                      </div>
+                    )
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -312,19 +329,17 @@ export default function AnalysisPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">전체 점수</span>
                     <Badge className="bg-green-100 text-green-800">
-                      {resumeData.score}/100
+                      {resume?.score}/100
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">총 글자 수</span>
-                    <span className="font-medium">
-                      {resumeData.totalCount}자
-                    </span>
+                    <span className="font-medium">{resume?.totalCount}자</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">섹션 수</span>
                     <span className="font-medium">
-                      {resumeData.sessions.length}개
+                      {resume?.sessions?.length}개
                     </span>
                   </div>
                 </div>
