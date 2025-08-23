@@ -56,13 +56,13 @@ const initialState: AuthState = {
  //로그인 Thunk
  // 서버에 로그인 요청을 보내고, 성공 시 유저 정보와 토큰을 받아옵니다.
 export const login = createAsyncThunk<AuthResponse, LoginPayload, { rejectValue: AuthError }>(
-  "auth/login",
+  "api/auth/login",
   async (payload, { rejectWithValue }) => {
     try {
-      const response = await api.post<AuthResponse>("/auth/login", payload);
+      const response = await api.post<AuthResponse>("/api/auth/login", payload);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data ?? { message: "네트워크 오류가 발생했습니다." });
     }
   }
 );

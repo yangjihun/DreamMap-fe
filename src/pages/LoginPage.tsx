@@ -10,7 +10,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../redux/hooks";
-import { setUser, signup } from "../redux/slices/authSlice";
+import { login, signup } from "../redux/slices/authSlice";
 import SignupModal from "../components/signup-modal";
 import type { SignupData } from "@/components/signup-modal";
 
@@ -22,11 +22,20 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // 실제 로그인 로직은 여기에 구현
-    //dispatch(setUser({ email, name: "사용자" }));
-    navigate("/dashboard");
+    try {
+      // 1. 입력된 이메일과 비밀번호로 login thunk를 디스패치합니다.
+      await dispatch(login({ email, password })).unwrap();
+
+      // 2. unwrap()이 성공적으로 완료되면 (로그인 성공 시) 대시보드로 이동합니다.
+      navigate("/dashboard");
+    } catch (error) {
+      // 3. unwrap()이 에러를 던지면 (로그인 실패 시) 에러를 처리합니다.
+      console.error("로그인 실패:", error);
+      // 사용자에게 "이메일 또는 비밀번호를 확인하세요."와 같은 알림을 보여주는 것이 좋습니다.
+      alert("로그인에 실패했습니다.");
+    }
   };
 
 
