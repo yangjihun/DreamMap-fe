@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import {
@@ -8,241 +8,352 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { Separator } from "@radix-ui/react-separator";
+import { Separator } from "../components/ui/separator";
 import {
-  FileText,
+  ArrowLeft,
   Download,
-  Sparkles,
-  CheckCircle,
-  AlertCircle,
-  Loader2,
   Star,
+  CheckCircle,
+  Clock,
   TrendingUp,
+  FileText,
+  MessageSquare,
+  Map,
 } from "lucide-react";
-
-interface AnalysisResult {
-  id: string;
-  originalResume: string;
-  feedback: string[];
-  improvedResume: string;
-  score: number;
-  status: "analyzing" | "completed" | "failed";
-}
+import { Resume, ResumeSession, ResumeItem } from "../types/resume";
 
 export default function AnalysisPage() {
   const { id } = useParams<{ id: string }>();
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult>({
-    id: id || "1",
-    originalResume: `[이력서 내용]
-• 웹 개발 경험 2년
-• React, Node.js, MongoDB 사용
-• 프로젝트 A, B, C 참여`,
-    feedback: [
-      "구체적인 성과 지표가 부족합니다 (예: 사용자 수, 성능 개선률 등)",
-      "기술 스택의 깊이를 더 자세히 설명해주세요",
-      "프로젝트에서 해결한 문제점과 해결 방법을 구체적으로 작성해주세요",
-      "협업 경험과 팀 기여도에 대한 설명이 필요합니다",
-    ],
-    improvedResume: `[개선된 이력서]
-• 웹 개발 경험 2년
-• React, Node.js, MongoDB 전문가
-• 프로젝트 A: 사용자 10,000명 달성, 페이지 로딩 속도 40% 개선
-• 프로젝트 B: 팀 리더로서 5명과 협업, 3개월 내 완성
-• 프로젝트 C: 마이크로서비스 아키텍처 설계 및 구현`,
-    score: 85,
-    status: "completed",
-  });
-
-  const [isGenerating, setIsGenerating] = useState(false);
   const navigate = useNavigate();
+  const [selectedItem, setSelectedItem] = useState<ResumeItem | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // 백엔드에서 받아올 데이터 (임시로 하드코딩)
+  const resumeData: Resume = {
+    id: id || "1",
+    userId: "user123",
+    title: "프론트엔드 개발자 이력서",
+    totalCount: 1250,
+    score: 85,
+    sessions: [
+      {
+        key: "intro",
+        title: "자기소개",
+        wordCount: 150,
+        items: [
+          {
+            title: "인사말",
+            text: "안녕하세요. 5년간의 프론트엔드 개발 경험을 바탕으로 사용자 중심의 웹 서비스를 만들어온 개발자입니다.",
+            review:
+              "자기소개가 명확하고 구체적입니다. 경험을 바탕으로 한 자신감 있는 어조가 좋습니다.",
+          },
+        ],
+      },
+      {
+        key: "body",
+        title: "경력사항",
+        wordCount: 800,
+        items: [
+          {
+            title: "ABC 테크 - 시니어 프론트엔드 개발자",
+            text: "React, TypeScript를 활용한 대규모 웹 애플리케이션 개발 및 팀 리드. 사용자 경험 개선 프로젝트를 주도하여 전환율 15% 향상.",
+            startDate: "2022-03",
+            endDate: "현재",
+            review:
+              "구체적인 성과와 기술 스택이 잘 드러납니다. 팀 리드 경험도 강조되어 있어 좋습니다.",
+          },
+          {
+            title: "XYZ 스타트업 - 프론트엔드 개발자",
+            text: "Vue.js를 활용한 웹 서비스 개발 및 사용자 경험 개선. 모바일 최적화를 통해 페이지 로딩 속도 30% 단축.",
+            startDate: "2020-01",
+            endDate: "2022-02",
+            review:
+              "기술적 성과가 구체적으로 표현되어 있습니다. 수치화된 결과가 인상적입니다.",
+          },
+        ],
+      },
+      {
+        key: "closing",
+        title: "기술 스택 및 프로젝트",
+        wordCount: 300,
+        items: [
+          {
+            title: "기술 스택",
+            text: "React, TypeScript, Node.js, PostgreSQL, Docker, AWS",
+            review:
+              "현재 시장에서 요구하는 핵심 기술들을 잘 보유하고 있습니다.",
+          },
+          {
+            title: "주요 프로젝트",
+            text: "E-커머스 플랫폼, 관리자 대시보드, 모바일 앱",
+            review:
+              "다양한 도메인의 프로젝트 경험이 있어 적응력이 뛰어날 것으로 보입니다.",
+          },
+        ],
+      },
+    ],
+    createdAt: "2024-01-15T00:00:00.000Z",
+    updatedAt: "2024-01-15T00:00:00.000Z",
+  };
 
   const handleMergeFeedback = async () => {
     setIsGenerating(true);
-    // AI가 피드백을 융합하여 새로운 레쥬메를 생성하는 로직
-    setTimeout(() => {
-      setAnalysisResult((prev) => ({
-        ...prev,
-        improvedResume: `[AI가 생성한 최종 이력서]
-• 웹 개발 경험 2년
-• React, Node.js, MongoDB 전문가
-• 프로젝트 A: 사용자 10,000명 달성, 페이지 로딩 속도 40% 개선
-• 프로젝트 B: 팀 리더로서 5명과 협업, 3개월 내 완성
-• 프로젝트 C: 마이크로서비스 아키텍처 설계 및 구현
-• 협업: Git, Jira를 활용한 체계적인 프로젝트 관리
-• 성과: 총 3개 프로젝트 완성, 팀 생산성 25% 향상`,
-        score: 95,
-      }));
-      setIsGenerating(false);
-    }, 3000);
+    // 실제로는 백엔드 API 호출
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    setIsGenerating(false);
+    alert("피드백이 반영된 새로운 이력서가 생성되었습니다!");
   };
 
   const handleDownload = () => {
-    const element = document.createElement("a");
-    const file = new Blob([analysisResult.improvedResume], {
-      type: "text/plain",
-    });
-    element.href = URL.createObjectURL(file);
-    element.download = `improved-resume-${id}.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    // 실제로는 백엔드에서 PDF 생성 후 다운로드
+    alert("이력서 다운로드가 시작됩니다.");
   };
 
-  const handleNavigateToRoadmap = () => {
-    navigate(`/roadmap/${id}`);
+  const getSessionIcon = (key: string) => {
+    switch (key) {
+      case "intro":
+        return <FileText className="h-5 w-5" />;
+      case "body":
+        return <TrendingUp className="h-5 w-5" />;
+      case "closing":
+        return <CheckCircle className="h-5 w-5" />;
+      default:
+        return <FileText className="h-5 w-5" />;
+    }
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 90) return "text-green-600 bg-green-100";
-    if (score >= 80) return "text-blue-600 bg-blue-100";
-    if (score >= 70) return "text-yellow-600 bg-yellow-100";
-    return "text-red-600 bg-red-100";
+  const getSessionColor = (key: string) => {
+    switch (key) {
+      case "intro":
+        return "bg-blue-100 text-blue-800";
+      case "body":
+        return "bg-green-100 text-green-800";
+      case "closing":
+        return "bg-purple-100 text-purple-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8 pb-32">
+        {/* 헤더 */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/dashboard")}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              뒤로가기
+            </Button>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                AI 이력서 분석 결과
+                {resumeData.title}
               </h1>
-              <p className="text-gray-600 mt-2">이력서 ID: {id} • 분석 완료</p>
+              <p className="text-gray-600 mt-1">AI 분석 결과</p>
             </div>
-            <div className="flex items-center space-x-4">
-              <Badge
-                className={`px-4 py-2 text-lg font-semibold ${getScoreColor(
-                  analysisResult.score
-                )}`}
-              >
-                <Star className="h-4 w-4 mr-2" />
-                {analysisResult.score}점
-              </Badge>
+          </div>
+          <div className="flex items-center gap-3">
+            <Badge className="bg-blue-100 text-blue-800">
+              점수: {resumeData.score}/100
+            </Badge>
+            <Badge variant="secondary">총 {resumeData.totalCount}자</Badge>
+          </div>
+        </div>
+
+        {/* 액션 버튼들 */}
+        <div className="flex items-center gap-3 mb-8">
+          <Button
+            onClick={handleMergeFeedback}
+            disabled={isGenerating}
+            className="flex items-center gap-2"
+          >
+            {isGenerating ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                생성 중...
+              </>
+            ) : (
+              <>
+                <Star className="h-4 w-4" />
+                피드백 반영하여 새 이력서 생성
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleDownload}
+            className="flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            다운로드
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* 원본 이력서 */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  원본 이력서
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {resumeData.sessions.map((session, sessionIndex) => (
+                    <div key={sessionIndex} className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`p-2 rounded-lg ${getSessionColor(
+                            session.key
+                          )}`}
+                        >
+                          {getSessionIcon(session.key)}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg text-gray-900">
+                            {session.title}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {session.wordCount}자
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 ml-12">
+                        {session.items.map((item, itemIndex) => (
+                          <div
+                            key={itemIndex}
+                            className={`p-4 border rounded-lg cursor-pointer transition-all hover:border-blue-300 hover:shadow-sm ${
+                              selectedItem === item
+                                ? "border-blue-500 bg-blue-50"
+                                : "border-gray-200"
+                            }`}
+                            onClick={() => setSelectedItem(item)}
+                          >
+                            {item.title && (
+                              <h4 className="font-medium text-gray-900 mb-2">
+                                {item.title}
+                              </h4>
+                            )}
+                            <p className="text-gray-700 mb-2">{item.text}</p>
+                            {(item.startDate || item.endDate) && (
+                              <div className="flex items-center gap-2 text-sm text-gray-500">
+                                <Clock className="h-4 w-4" />
+                                {item.startDate} - {item.endDate || "현재"}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {sessionIndex < resumeData.sessions.length - 1 && (
+                        <Separator className="my-6" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* 리뷰 및 피드백 */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  AI 리뷰
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {selectedItem ? (
+                  <div className="space-y-4">
+                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <h4 className="font-medium text-blue-900 mb-2">
+                        {selectedItem.title || "선택된 항목"}
+                      </h4>
+                      <p className="text-blue-800 text-sm">
+                        {selectedItem.review}
+                      </p>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      <p>
+                        💡 <strong>팁:</strong> 이 항목을 클릭하여 더 자세한
+                        피드백을 확인하세요.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <MessageSquare className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                    <p>왼쪽의 항목을 클릭하여</p>
+                    <p>AI 리뷰를 확인하세요</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>전체 분석 요약</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">전체 점수</span>
+                    <Badge className="bg-green-100 text-green-800">
+                      {resumeData.score}/100
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">총 글자 수</span>
+                    <span className="font-medium">
+                      {resumeData.totalCount}자
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">섹션 수</span>
+                    <span className="font-medium">
+                      {resumeData.sessions.length}개
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+
+      {/* 하단 고정된 다음 단계 카드 */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                다음 단계로 진행하세요
+              </h3>
+              <p className="text-sm text-gray-600">
+                AI 분석 결과를 바탕으로 더 나은 이력서를 만들어보세요
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
               <Button
-                onClick={handleDownload}
-                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => navigate(`/roadmap/${id}`)}
+                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
               >
-                <Download className="h-4 w-4 mr-2" />
-                다운로드
+                <Map className="h-4 w-4" />
+                커리어 로드맵 보기
               </Button>
             </div>
           </div>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* 원본 이력서 */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <FileText className="h-5 w-5 mr-2" />
-                원본 이력서
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono">
-                  {analysisResult.originalResume}
-                </pre>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* AI 피드백 */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <AlertCircle className="h-5 w-5 mr-2 text-orange-600" />
-                AI 피드백
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {analysisResult.feedback.map((feedback, index) => (
-                  <div
-                    key={index}
-                    className="flex items-start space-x-3 p-3 bg-orange-50 rounded-lg"
-                  >
-                    <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-sm text-orange-800">{feedback}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Separator className="my-8" />
-
-        {/* 개선된 이력서 */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Sparkles className="h-5 w-5 mr-2 text-purple-600" />
-              개선된 이력서
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-purple-50 p-4 rounded-lg mb-4">
-              <pre className="whitespace-pre-wrap text-sm text-purple-800 font-mono">
-                {analysisResult.improvedResume}
-              </pre>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <Badge className="px-3 py-1 bg-green-100 text-green-800">
-                  <CheckCircle className="h-4 w-4 mr-1" />
-                  개선 완료
-                </Badge>
-                <span className="text-sm text-gray-600">
-                  점수: {analysisResult.score}점
-                </span>
-              </div>
-
-              <Button
-                onClick={handleMergeFeedback}
-                disabled={isGenerating}
-                className="bg-purple-600 hover:bg-purple-700"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    AI 분석 중...
-                  </>
-                ) : (
-                  <>
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    피드백 융합하기
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 성장 제안 */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <TrendingUp className="h-5 w-5 mr-2 text-green-600" />더
-              성장하시겠습니까?
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-700 mb-4">
-              현재 선택하신 IT 직업에 필요한 커리어 로드맵을 AI가 그려드립니다.
-              지역을 고려한 스터디 그룹과 부트캠프를 추천해드려요!
-            </p>
-            <Button
-              onClick={handleNavigateToRoadmap}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              로드맵 생성하기
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
