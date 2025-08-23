@@ -35,6 +35,9 @@ export default function AnalysisPage() {
     title: "프론트엔드 개발자 이력서",
     totalCount: 1250,
     score: 85,
+    status: "analyzed",
+    starred: true,
+    lastModified: "2024년 1월 15일",
     sessions: [
       {
         key: "intro",

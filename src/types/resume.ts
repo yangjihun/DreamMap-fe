@@ -20,6 +20,9 @@ export interface Resume {
   totalCount: number;
   score: number;
   sessions: ResumeSession[];
+  status: string;
+  starred: boolean;
+  lastModified: string;
   createdAt: string;
   updatedAt: string;
 }
