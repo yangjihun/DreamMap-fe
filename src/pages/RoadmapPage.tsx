@@ -8,16 +8,18 @@ import { RoadmapHeader } from "@/components/roadmap/RoadmapHeader";
 import { Roadmap, RoadmapPeriod } from "@/types/roadmap";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { getRoadmap } from "@/redux/slices/roadmapSlice";
+import { useParams } from "react-router-dom";
 
 export default function RoadmapPage() {
   const dispatch = useAppDispatch();
   const { roadmapPlans } = useAppSelector((state) => state.roadmap);
+  const { id } = useParams<{ id: string }>();
   const [selectedPeriod, setSelectedPeriod] =
     useState<RoadmapPeriod>("3months");
   const [currentPlans, setCurrentPlans] = useState<Roadmap | undefined>();
 
   useEffect(() => {
-    // resume id 넘겨야함
+    // if (id) dispatch(getRoadmap(id));
     dispatch(getRoadmap("68a7dcd1a9308b5fbd2110e3"));
   }, []);
 
