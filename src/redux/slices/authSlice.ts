@@ -82,6 +82,18 @@ export const signup = createAsyncThunk<AuthResponse, SignupPayload, { rejectValu
   }
 );
 
+export const loginWithToken = createAsyncThunk<User, void, { rejectValue: AuthError }>(
+  "auth/loginWithToken",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get<User>("/user/me");
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data ?? { message: "유효하지 않은 토큰입니다." });
+    }
+  }
+);
+
 // --- Slice 정의 ---
 
 export const authSlice = createSlice({
@@ -90,10 +102,17 @@ export const authSlice = createSlice({
   // 동기적인 상태 변경을 처리하는 리듀서
   reducers: {
     // 수동으로 사용자 정보를 설정하는 액션 (예: 페이지 새로고침 시)
-    setUser: (state, action: PayloadAction<{ user: User; token: string }>) => {
+    setUser: (state, action: PayloadAction<{ user: User | null; token: string | null }>) => {   //null 추가 후 실험
       state.user = action.payload.user;
       state.token = action.payload.token;
-      sessionStorage.setItem("token", action.payload.token);
+      // 👇 이 부분을 수정합니다.
+      if (action.payload.token) {
+        // 토큰이 문자열 값일 경우, 세션 스토리지에 저장합니다.
+        sessionStorage.setItem("token", action.payload.token);
+      } else {
+        // 토큰이 null일 경우, 세-션 스토리지에서 해당 아이템을 제거합니다.
+        sessionStorage.removeItem("token");
+      }
     },
     // 로그아웃 시 상태를 초기화하는 액션
     logout: (state) => {
@@ -131,12 +150,36 @@ export const authSlice = createSlice({
       })
       .addCase(signup.fulfilled, (state, action: PayloadAction<AuthResponse>) => {
         state.isLoading = false;
+        state.isAuthenticated = true; // 회원가입 시 바로 로그인 상태로
         state.user = action.payload.user;
         state.token = action.payload.token;
         sessionStorage.setItem("token", action.payload.token);
       })
       .addCase(signup.rejected, (state, action) => {
         state.isLoading = false;
+        state.error = action.payload as AuthError;
+      })
+      .addCase(loginWithToken.pending, (state) => {
+        // 요청 시작 시 로딩 상태를 true로 설정하고 에러를 초기화합니다.
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(loginWithToken.fulfilled, (state, action: PayloadAction<User>) => {
+        // 요청 성공 시 (토큰이 유효함)
+        state.isLoading = false;
+        state.isAuthenticated = true; // 인증 상태를 true로 변경합니다.
+        state.user = action.payload;  // 서버로부터 받은 사용자 정보를 저장합니다.
+        // state.token은 변경할 필요가 없습니다. 
+        // 이 thunk가 성공했다는 것 자체가 이미 state에 있던 토큰이 유효하다는 의미이기 때문입니다.
+      })
+      .addCase(loginWithToken.rejected, (state, action) => {
+        // 요청 실패 시 (토큰이 유효하지 않음)
+        state.isLoading = false;
+        state.isAuthenticated = false; // 인증 상태를 false로 변경합니다.
+        state.user = null;
+        state.token = null; // Redux 스토어에서 토큰을 반드시 제거해야 합니다.
+                            // 제거하지 않으면 api.ts 인터셉터가 계속 잘못된 토큰을 사용합니다.
+        sessionStorage.removeItem("token"); // 다음 새로고침 시 잘못된 토큰을 다시 로드하지 않도록 세션 스토리지에서도 제거합니다.
         state.error = action.payload as AuthError;
       });
   },
