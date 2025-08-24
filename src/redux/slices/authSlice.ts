@@ -89,7 +89,7 @@ export const loginWithToken = createAsyncThunk<User, void, { rejectValue: AuthEr
       const response = await api.get<User>("/user/me");
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data ?? { message: "유효하지 않은 토큰입니다." });
+      return rejectWithValue(error.response?.data.message ?? { message: "유효하지 않은 토큰입니다." });
     }
   }
 );

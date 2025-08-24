@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "../components/ui/button";
 import {
   Card,
@@ -13,6 +13,8 @@ import { useAppDispatch } from "../redux/hooks";
 import { login, signup } from "../redux/slices/authSlice";
 import SignupModal from "../components/signup-modal";
 import type { SignupData } from "@/components/signup-modal";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 
 export default function LoginPage() {
@@ -21,6 +23,15 @@ export default function LoginPage() {
   const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+
+   // Redux 스토어에서 인증 상태를 가져옵니다.
+   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+
+   useEffect(() => { //특별한 공용 페이지  로그인 페이지로 이동하는 것 막기 위함
+    if (isAuthenticated) {
+      navigate("/dashboard"); 
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
