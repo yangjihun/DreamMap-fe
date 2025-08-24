@@ -290,7 +290,8 @@ export default function SignupModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    //<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-white flex items-center justify-center z-50">
       <Card className="w-full max-w-2xl mx-4">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div>
