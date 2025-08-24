@@ -23,6 +23,7 @@ import {
 import { Resume, ResumeSession, ResumeItem } from "../types/resume";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { getResume } from "../redux/slices/resumeSlice";
+import { createRoadmap } from "@/redux/slices/roadmapSlice";
 
 export default function AnalysisPage() {
   const dispatch = useAppDispatch();
@@ -147,6 +148,13 @@ export default function AnalysisPage() {
       default:
         return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const handleRoadmapCreate = () => {
+    if (!!id) {
+      dispatch(createRoadmap(id));
+    }
+    navigate(`/roadmap/${id}`);
   };
 
   return (
@@ -363,7 +371,7 @@ export default function AnalysisPage() {
             </div>
             <div className="flex items-center gap-3">
               <Button
-                onClick={() => navigate(`/roadmap/${id}`)}
+                onClick={handleRoadmapCreate}
                 className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
               >
                 <Map className="h-4 w-4" />
