@@ -13,7 +13,7 @@ const LOCAL_BACKEND =
   (import.meta as any).env?.VITE_LOCAL_BACKEND || "http://localhost:5000";
 
 const api: AxiosInstance = axios.create({
-  baseURL: LOCAL_BACKEND,
+  baseURL: `${LOCAL_BACKEND}/api`,
   withCredentials: false,
   headers: {
     "Content-Type": "application/json",
