@@ -7,7 +7,7 @@ export interface ResumeItem {
 }
 
 export interface ResumeSession {
-  key: "intro" | "body" | "closing";
+  key: string;
   title: string;
   items: ResumeItem[];
   wordCount: number;

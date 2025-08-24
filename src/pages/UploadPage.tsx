@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Button } from "../components/ui/button";
 import {
   Card,
@@ -10,6 +10,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
+
 import {
   Upload,
   FileText,
@@ -22,137 +23,162 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import { getAiReview } from "../redux/slices/resumeSlice";
+import { 
+  createNewResumeFromFile,
+  createNewResumeWithSections,
+  setError 
+} from "../redux/slices/resumeSlice";
 
 type UploadMethod = "file" | "text";
-type UploadStatus = "idle" | "uploading" | "analyzing" | "completed" | "failed";
-
-interface UploadData {
-  method: UploadMethod;
-  content: string;
-  fileName?: string;
-}
 
 export default function UploadPage() {
-  const dispatch = useAppDispatch();
-  const { loading, resume } = useAppSelector((state) => state.resume);
   const [uploadMethod, setUploadMethod] = useState<UploadMethod>("file");
-  const [uploadStatus, setUploadStatus] = useState<UploadStatus>("idle");
-  const [uploadData, setUploadData] = useState<UploadData>({
-    method: "file",
-    content: "",
-  });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [textContent, setTextContent] = useState("");
+  const [resumeTitle, setResumeTitle] = useState("");
+  
+  const [sectionContents, setSectionContents] = useState({
+    intro: { text: "", title: "" },
+    body: { text: "", title: "" },
+    closing: { text: "", title: "" },
+  });
+  
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { loading, error } = useAppSelector((state) => state.resume);
+
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
-      // 파일 내용을 읽어서 content에 저장
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const content = e.target?.result as string;
-        setUploadData({
-          method: "file",
-          content,
-          fileName: file.name,
-        });
-      };
-      reader.readAsText(file);
     }
   };
 
-  const handleTextChange = (content: string) => {
-    setTextContent(content);
-    setUploadData({
-      method: "text",
-      content,
-    });
+  const handleSectionTextChange = (
+    section: "intro" | "body" | "closing", 
+    field: "text" | "title", 
+    value: string
+  ) => {
+    setSectionContents(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: value
+      }
+    }));
   };
 
   const handleAnalyze = async () => {
-    if (!uploadData.content.trim()) {
-      alert("내용을 입력하거나 파일을 업로드해주세요.");
-      return;
-    }
-
-    setUploadStatus("uploading");
-
-    // 파일 업로드 시뮬레이션
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    setUploadStatus("analyzing");
-
-    // AI 분석 요청
+    // 백엔드 연결 테스트
     try {
-      await dispatch(getAiReview("68a7b8d77433cbd888394172"));
-    } catch (error) {
-      setUploadStatus("failed");
+      const testResponse = await fetch("http://localhost:5000/api/resume/all");
+      if (!testResponse.ok) {
+        console.error("백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요.");
+      }
+    } catch (connectionError) {
+      console.error("백엔드 연결 실패:", connectionError);
       return;
     }
-  };
 
-  // loading 상태에 따라 uploadStatus 업데이트
-  useEffect(() => {
-    if (uploadStatus === "analyzing") {
-      if (loading) {
-        setUploadStatus("analyzing");
-      } else {
-        setUploadStatus("completed");
-        // 분석 완료 후 분석 페이지로 이동
-        setTimeout(() => {
-          navigate(`/analysis/${resume?.id}`);
-        }, 1500);
+    if (uploadMethod === "text") {
+      const hasContent = Object.values(sectionContents).some(section => 
+        section.text && section.text.trim()
+      );
+      if (!hasContent) {
+        alert("적어도 하나의 섹션에는 내용을 입력해주세요.");
+        return;
       }
     }
-  }, [loading, uploadStatus]);
+    
+    if (uploadMethod === "file" && !selectedFile) {
+      alert("파일을 선택해주세요.");
+      return;
+    }
+
+    if (!resumeTitle.trim()) {
+      alert("Resume 제목을 입력해주세요.");
+      return;
+    }
+
+    try {
+      if (error) {
+        dispatch(setError(error));
+      }
+
+      let result;
+      
+      if (uploadMethod === "text") {
+        const sections: any = {};
+        Object.entries(sectionContents).forEach(([key, content]) => {
+          if (content.text && content.text.trim()) {
+            sections[key] = {
+              text: content.text,
+              title: content.title || undefined,
+            };
+          }
+        });
+
+        console.log("Creating new resume with sections:", { resumeTitle, sections });
+        result = await dispatch(createNewResumeWithSections({
+          resumeTitle: resumeTitle,
+          sections: sections,
+        })).unwrap();
+        console.log("Resume creation result:", result);
+      } else {
+        result = await dispatch(createNewResumeFromFile({
+          file: selectedFile!,
+          sessionKey: "intro",
+          itemTitle: undefined,
+          resumeTitle: resumeTitle,
+        })).unwrap();
+      }
+
+      if (result) {
+        navigate(`/analysis/${result.id}`);
+      }
+      
+    } catch (error: any) {
+      console.error("Resume 생성 중 오류:", error);
+      console.error("Error details:", error.response?.data || error);
+      alert(error.message || error.response?.data?.error || "Resume 생성에 실패했습니다.");
+    }
+  };
 
   const removeFile = () => {
     setSelectedFile(null);
-    setUploadData({
-      method: "file",
-      content: "",
-    });
   };
 
   const isAnalyzeDisabled = () => {
-    return uploadStatus !== "idle" || !uploadData.content.trim();
+    if (loading) return true;
+    if (uploadMethod === "text") {
+      const hasContent = Object.values(sectionContents).some(section => 
+        section.text && section.text.trim()
+      );
+      return !hasContent;
+    }
+    if (uploadMethod === "file") return !selectedFile;
+    return false;
   };
 
   const getStatusMessage = () => {
-    switch (uploadStatus) {
-      case "uploading":
-        return "파일을 업로드하고 있습니다...";
-      case "analyzing":
-        return "AI가 이력서를 분석하고 있습니다...";
-      case "completed":
-        return "분석이 완료되었습니다!";
-      case "failed":
-        return "분석 중 오류가 발생했습니다.";
-      default:
-        return "";
+    if (loading) {
+      return "Resume을 생성하고 있습니다...";
     }
+    if (error) {
+      return error || "오류가 발생했습니다.";
+    }
+    return "";
   };
 
   const getStatusIcon = () => {
-    switch (uploadStatus) {
-      case "uploading":
-      case "analyzing":
-        return <Loader2 className="h-5 w-5 animate-spin" />;
-      case "completed":
-        return <CheckCircle className="h-5 w-5 text-green-600" />;
-      case "failed":
-        return <AlertCircle className="h-5 w-5 text-red-600" />;
-      default:
-        return null;
+    if (loading) {
+      return <Loader2 className="h-5 w-5 animate-spin" />;
     }
+    if (error) {
+      return <AlertCircle className="h-5 w-5 text-red-600" />;
+    }
+    return null;
   };
-
-  useEffect(() => {
-    dispatch(getAiReview("68a7b8d77433cbd888394172"));
-  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -160,12 +186,42 @@ export default function UploadPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            이력서 업로드 및 분석
+            새 이력서 생성
           </h1>
           <p className="text-lg text-gray-600">
-            파일을 업로드하거나 텍스트를 직접 입력하여 AI가 분석해드립니다
+            새로운 이력서를 생성합니다. 파일을 업로드하거나 텍스트를 직접 입력하세요.
           </p>
         </div>
+
+        
+        {/* Upload Settings */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Sparkles className="h-5 w-5 mr-2 text-purple-600" />
+              이력서 제목
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-6">
+              <Label htmlFor="resume-title" className="text-base font-medium text-gray-700 mb-3 block">
+                이력서 제목 *
+              </Label>
+              <Input
+                id="resume-title"
+                type="text"
+                placeholder="예: 프론트엔드 개발자 김철수의 이력서"
+                value={resumeTitle}
+                onChange={(e) => setResumeTitle(e.target.value)}
+                className="border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                required={true}
+              />
+              <p className="text-sm text-gray-500 mt-2">
+                새 이력서의 제목을 입력해주세요
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Upload Method Selection */}
         <Card className="mb-8">
@@ -267,42 +323,92 @@ export default function UploadPage() {
               </TabsContent>
 
               <TabsContent value="text" className="mt-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label
-                      htmlFor="text-content"
-                      className="text-base font-medium text-gray-700 mb-3 block"
-                    >
-                      이력서 내용 입력
+                <div className="space-y-6">
+                  <p className="text-base text-gray-700 mb-4">
+                    이력서를 3개 섹션으로 나누어 입력하세요. 모든 섹션을 입력할 필요는 없습니다.
+                  </p>
+                  
+                  {/* 도입부 섹션 */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <Label className="text-base font-medium text-gray-700 mb-3 block">
+                      🌟 도입부 - 자기소개, 목표
                     </Label>
-                    <Textarea
-                      id="text-content"
-                      placeholder="이력서 내용을 직접 입력하세요..."
-                      value={textContent}
-                      onChange={(e) => handleTextChange(e.target.value)}
-                      rows={10}
-                      className="mt-2 border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                    <Input
+                      placeholder="예: 학력, 자기소개, 목표 등"
+                      value={sectionContents.intro.title}
+                      onChange={(e) => handleSectionTextChange("intro", "title", e.target.value)}
+                      className="mb-3 border-gray-200 focus:border-blue-500"
                     />
-                    <div className="mt-2 flex items-center justify-between">
-                      <p className="text-sm text-gray-500">
-                        최소 100자 이상 입력해주세요
-                      </p>
-                      <span
-                        className={`text-sm ${
-                          textContent.length >= 100
-                            ? "text-green-600"
-                            : "text-gray-400"
-                        }`}
-                      >
-                        {textContent.length}/100
-                      </span>
-                    </div>
+                    <Textarea
+                      placeholder="자기소개, 목표, 가치관 등을 입력하세요..."
+                      value={sectionContents.intro.text}
+                      onChange={(e) => handleSectionTextChange("intro", "text", e.target.value)}
+                      rows={4}
+                      className="border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {sectionContents.intro.text.length}자
+                    </p>
+                  </div>
+
+                  {/* 본문 섹션 */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <Label className="text-base font-medium text-gray-700 mb-3 block">
+                      💼 본문 - 경력, 프로젝트, 기술
+                    </Label>
+                    <Input
+                      placeholder="예: 경력사항, 프로젝트, 기술스택 등"
+                      value={sectionContents.body.title}
+                      onChange={(e) => handleSectionTextChange("body", "title", e.target.value)}
+                      className="mb-3 border-gray-200 focus:border-blue-500"
+                    />
+                    <Textarea
+                      placeholder="경력, 프로젝트, 기술, 성과 등을 입력하세요..."
+                      value={sectionContents.body.text}
+                      onChange={(e) => handleSectionTextChange("body", "text", e.target.value)}
+                      rows={6}
+                      className="border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {sectionContents.body.text.length}자
+                    </p>
+                  </div>
+
+                  {/* 마무리 섹션 */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <Label className="text-base font-medium text-gray-700 mb-3 block">
+                      🎯 마무리 - 포부, 다짐
+                    </Label>
+                    <Input
+                      placeholder="예: 포부, 다짐, 향후 계획 등"
+                      value={sectionContents.closing.title}
+                      onChange={(e) => handleSectionTextChange("closing", "title", e.target.value)}
+                      className="mb-3 border-gray-200 focus:border-blue-500"
+                    />
+                    <Textarea
+                      placeholder="포부, 다짐, 향후 계획 등을 입력하세요..."
+                      value={sectionContents.closing.text}
+                      onChange={(e) => handleSectionTextChange("closing", "text", e.target.value)}
+                      rows={4}
+                      className="border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {sectionContents.closing.text.length}자
+                    </p>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-blue-700">
+                      💡 <strong>팁:</strong> 적어도 하나의 섹션에는 내용을 입력해야 합니다. 
+                      각 섹션의 제목은 선택사항이며, 입력하지 않으면 기본 제목이 사용됩니다.
+                    </p>
                   </div>
                 </div>
               </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
+
 
         {/* Analysis Button */}
         <Card className="mb-8">
@@ -314,13 +420,13 @@ export default function UploadPage() {
                 size="lg"
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-12 py-4 text-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
-                {uploadStatus === "idle" && (
+                {!loading && (
                   <>
                     <Sparkles className="h-6 w-6 mr-3" />
-                    AI 분석 시작하기
+                    새 이력서 생성하기
                   </>
                 )}
-                {uploadStatus !== "idle" && (
+                {loading && (
                   <>
                     {getStatusIcon()}
                     <span className="ml-3">{getStatusMessage()}</span>
@@ -328,13 +434,10 @@ export default function UploadPage() {
                 )}
               </Button>
 
-              {uploadStatus !== "idle" && (
+              {(loading || error) && (
                 <p className="text-sm text-gray-600 mt-4">
-                  {uploadStatus === "uploading" && "잠시만 기다려주세요..."}
-                  {uploadStatus === "analyzing" &&
-                    "AI가 이력서를 자세히 분석하고 있습니다..."}
-                  {uploadStatus === "completed" &&
-                    "분석이 완료되었습니다! 분석 결과 페이지로 이동합니다."}
+                  {loading && "Resume을 생성하고 있습니다. 잠시만 기다려주세요..."}
+                  {error && "오류가 발생했습니다. 다시 시도해주세요."}
                 </p>
               )}
             </div>

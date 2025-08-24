@@ -1,13 +1,14 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Provider } from "react-redux";
-import { store } from "./redux/store";
-import PrivateRoute from "./components/PrivateRoute";
-import HomePage from "./pages/HomePage";
-import DashboardPage from "./pages/DashboardPage";
-import LoginPage from "./pages/LoginPage";
-import UploadPage from "./pages/UploadPage";
-import AnalysisPage from "./pages/AnalysisPage";
-import RoadmapPage from "./pages/RoadmapPage";
+import { store } from "@/redux/store";
+import PrivateRoute from "@/components/PrivateRoute";
+import HomePage from "@/pages/HomePage";
+import DashboardPage from "@/pages/DashboardPage";
+import LoginPage from "@/pages/LoginPage";
+import UploadPage from "@/pages/UploadPage";
+import AnalysisPage from "@/pages/AnalysisPage";
+import RoadmapPage from "@/pages/RoadmapPage";
+import ResumeDetailPage from "@/pages/ResumeDetailPage";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
               {/* ':id'와 같은 동적 경로도 보호할 수 있다. */}
               <Route path="/analysis/:id" element={<AnalysisPage />} />
               <Route path="/roadmap/:id" element={<RoadmapPage />} />
+              <Route path="/resume/:id" element={<ResumeDetailPage />} />
             </Route>
           </Routes>
         </div>

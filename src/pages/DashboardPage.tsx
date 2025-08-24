@@ -17,17 +17,14 @@ import {
   Sparkles,
   Star,
   Trash2,
-  Download,
   Eye,
   Search,
-  Code,
-  Briefcase,
-  GraduationCap,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "../redux/hooks";
-import { deleteResume, toggleStar } from "../redux/slices/resumeSlice";
+import { deleteResume, toggleStar, fetchResumes, setError } from "../redux/slices/resumeSlice";
 import { logout } from "../redux/slices/authSlice";
+import { useEffect } from "react";
 
 const templates = [
   {
@@ -36,41 +33,34 @@ const templates = [
     description: "처음부터 시작하기",
     icon: FileText,
     color: "bg-blue-50 text-blue-600",
-  },
-  {
-    id: "developer",
-    title: "개발자 템플릿",
-    description: "IT 개발자 전용",
-    icon: Code,
-    color: "bg-green-50 text-green-600",
-  },
-  {
-    id: "business",
-    title: "비즈니스 템플릿",
-    description: "기업 지원용",
-    icon: Briefcase,
-    color: "bg-purple-50 text-purple-600",
-  },
-  {
-    id: "graduate",
-    title: "신입 템플릿",
-    description: "신입/졸업생용",
-    icon: GraduationCap,
-    color: "bg-orange-50 text-orange-600",
-  },
+  }
 ];
 
 export default function DashboardPage() {
   const dispatch = useAppDispatch();
-  const { resumes } = useAppSelector((state) => state.resume);
+  const navigate = useNavigate();
+  const { resumes, loading, error } = useAppSelector((state) => state.resume);
   const { user } = useAppSelector((state) => state.auth);
+
+  useEffect(() => {
+    dispatch(fetchResumes());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (error) {
+      alert(error);
+      dispatch(setError(error));
+    }
+  }, [error, dispatch]);
 
   const handleStarToggle = (id: string) => {
     dispatch(toggleStar(id));
   };
 
-  const handleDelete = (id: string) => {
-    dispatch(deleteResume(id));
+  const handleDelete = async (id: string) => {
+    if (window.confirm("정말로 이 이력서를 삭제하시겠습니까?")) {
+      dispatch(deleteResume(id));
+    }
   };
 
   const handleLogout = () => {
@@ -173,7 +163,10 @@ export default function DashboardPage() {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {templates.map((template) => (
-              <Link key={template.id} to="/upload">
+              <Link 
+                key={template.id} 
+                to={template.id === "1" ? "/upload?mode=new" : "/upload?mode=add"}
+              >
                 <Card className="border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group bg-white">
                   <CardContent className="p-6 text-center">
                     <div
@@ -206,7 +199,12 @@ export default function DashboardPage() {
             </Button>
           </div>
 
-          {resumes.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-500">이력서 목록을 불러오고 있습니다...</p>
+            </div>
+          ) : resumes.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -222,6 +220,7 @@ export default function DashboardPage() {
                 <Card
                   key={resume.id}
                   className="border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group bg-white"
+                  onClick={() => navigate(`/resume/${resume.id}`)}
                 >
                   <CardContent className="p-0">
                     <div className="h-48 bg-gray-50 border-b border-gray-200 flex items-center justify-center">
@@ -241,23 +240,25 @@ export default function DashboardPage() {
                               variant="ghost"
                               size="sm"
                               className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              disabled={loading}
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                          <DropdownMenuContent align="end" className="bg-white">
+                            <DropdownMenuItem onClick={() => navigate(`/resume/${resume.id}`)}>
                               <Eye className="mr-2 h-4 w-4" />
                               <span>보기</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Download className="mr-2 h-4 w-4" />
-                              <span>다운로드</span>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-red-600 focus:text-red-600"
-                              onClick={() => handleDelete(resume.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(resume.id);
+                              }}
+                              disabled={loading}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               <span>삭제</span>
@@ -279,8 +280,12 @@ export default function DashboardPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleStarToggle(resume.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStarToggle(resume.id);
+                          }}
                           className="h-6 w-6 p-0"
+                          disabled={loading}
                         >
                           <Star
                             className={`h-4 w-4 ${
