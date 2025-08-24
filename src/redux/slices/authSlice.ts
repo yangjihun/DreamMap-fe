@@ -56,10 +56,10 @@ const initialState: AuthState = {
  //로그인 Thunk
  // 서버에 로그인 요청을 보내고, 성공 시 유저 정보와 토큰을 받아옵니다.
 export const login = createAsyncThunk<AuthResponse, LoginPayload, { rejectValue: AuthError }>(
-  "api/auth/login",
+  "auth/login",
   async (payload, { rejectWithValue }) => {
     try {
-      const response = await api.post<AuthResponse>("/api/auth/login", payload);
+      const response = await api.post<AuthResponse>("/auth/login", payload);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data ?? { message: "네트워크 오류가 발생했습니다." });
@@ -71,10 +71,10 @@ export const login = createAsyncThunk<AuthResponse, LoginPayload, { rejectValue:
 //회원가입 Thunk
 //서버에 회원가입 요청을 보내고, 성공 시 유저 정보와 토큰을 받아옵니다.
 export const signup = createAsyncThunk<AuthResponse, SignupPayload, { rejectValue: AuthError }>(
-  "api/auth/signup",
+  "auth/signup",
   async (payload, { rejectWithValue }) => {
     try {
-      const response = await api.post<AuthResponse>("/api/auth/signup", payload);
+      const response = await api.post<AuthResponse>("/auth/signup", payload);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data ?? { message: "네트워크 오류가 발생했습니다." });
