@@ -1,13 +1,14 @@
 export type RoadmapPeriod = "3months" | "6months" | "1year";
+export type RoadmapResource = "course" | "study";
 
 export interface Roadmap {
-  id: string;
+  _id: string;
   period: RoadmapPeriod;
   paths: Path[];
 }
 
 export interface Path {
-  id: string;
+  _id: string;
   title: string;
   description: string;
   skills: string[];
@@ -16,12 +17,13 @@ export interface Path {
 }
 
 export interface Resource {
-  id: string;
-  resourceType: "course" | "study";
+  _id: string;
+  resourceType: RoadmapResource;
   name: string;
   location: string;
   price: string;
   rating: number;
   provider: string;
   url?: string;
+  description?: string;
 }

@@ -5,10 +5,11 @@ import { RoadmapTabs } from "@/components/roadmap/RoadmapTabs";
 import { useEffect, useState } from "react";
 import { RoadmapContent } from "@/components/roadmap/RoadmapContent";
 import { RoadmapHeader } from "@/components/roadmap/RoadmapHeader";
-import { Roadmap, RoadmapPeriod } from "@/types/roadmap";
+import { Resource, Roadmap, RoadmapPeriod } from "@/types/roadmap";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { getRoadmap } from "@/redux/slices/roadmapSlice";
 import { useParams } from "react-router-dom";
+import { RoadmapResourceList } from "@/components/roadmap/RoadmapResourceList";
 
 export default function RoadmapPage() {
   const dispatch = useAppDispatch();
@@ -17,10 +18,14 @@ export default function RoadmapPage() {
   const [selectedPeriod, setSelectedPeriod] =
     useState<RoadmapPeriod>("3months");
   const [currentPlans, setCurrentPlans] = useState<Roadmap | undefined>();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedResource, setSelectedResource] = useState<
+    Resource | undefined
+  >();
 
   useEffect(() => {
-    // if (id) dispatch(getRoadmap(id));
-    dispatch(getRoadmap("68a7dcd1a9308b5fbd2110e3"));
+    if (id) dispatch(getRoadmap(id));
+    // dispatch(getRoadmap("68a7dcd1a9308b5fbd2110e3"));
   }, []);
 
   useEffect(() => {
@@ -30,6 +35,17 @@ export default function RoadmapPage() {
     );
     setCurrentPlans(findPlan);
   }, [selectedPeriod, roadmapPlans]);
+
+  const currentResources = () => {
+    return currentPlans?.paths
+      .flatMap((path) => path.resources)
+      .filter((resource) => resource !== undefined);
+  };
+
+  const handleOpenModal = (resource: Resource) => {
+    setIsModalOpen(true);
+    setSelectedResource(resource);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -51,7 +67,13 @@ export default function RoadmapPage() {
               selectedPeriod={selectedPeriod}
               setSelectedPeriod={setSelectedPeriod}
             />
-            <RoadmapContent currentPlans={currentPlans} />
+            <RoadmapContent
+              currentPlans={currentPlans}
+              isModalOpen={isModalOpen}
+              setIsModalOpen={setIsModalOpen}
+              handleOpenModal={handleOpenModal}
+              selectedResource={selectedResource}
+            />
           </div>
 
           {/* 사이드바 */}
@@ -78,7 +100,7 @@ export default function RoadmapPage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-white border border-gray-200 shadow-sm">
+            {/* <Card className="bg-white border border-gray-200 shadow-sm">
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   추천 리소스
@@ -98,7 +120,11 @@ export default function RoadmapPage() {
                   </Button>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
+            <RoadmapResourceList
+              currentResources={currentResources()}
+              handleOpenModal={handleOpenModal}
+            />
           </div>
         </div>
       </div>

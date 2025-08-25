@@ -16,11 +16,9 @@ const initialState: RoadmapState = {
 
 export const createRoadmap = createAsyncThunk(
   "roadmap/createRoadmap",
-  async (id: string, { rejectWithValue }) => {
+  async (resumeId: string, { rejectWithValue }) => {
     try {
-      const response = await api.post(`/roadmap/${id}`);
-      console.log("api 연결???");
-      // console.log("roadmap>>>>>", response.data);
+      const response = await api.post(`/roadmap/${resumeId}`);
       return response.data.data.plans;
     } catch (error: any) {
       return rejectWithValue(error.message);
@@ -30,11 +28,28 @@ export const createRoadmap = createAsyncThunk(
 
 export const getRoadmap = createAsyncThunk(
   "roadmap/getRoadmap",
-  async (id: string, { rejectWithValue }) => {
+  async (resumeId: string, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/roadmap/${id}`);
-      console.log("???????", response.data);
+      const response = await api.get(`/roadmap/${resumeId}`);
       return response.data.data.plans;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// resource 학습 완료 토글
+export const toggleResourceState = createAsyncThunk(
+  "roadmap/toggleResourceState",
+  async (
+    { resumeId, resourceId }: { resumeId: string; resourceId: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await api.put(
+        `/roadmap/${resumeId}/resource/${resourceId}/state`
+      );
+      return response.data.data;
     } catch (error: any) {
       return rejectWithValue(error.message);
     }
@@ -68,6 +83,17 @@ const roadmapSlice = createSlice({
         state.roadmapPlans = action.payload;
       })
       .addCase(getRoadmap.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(toggleResourceState.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(toggleResourceState.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(toggleResourceState.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });
