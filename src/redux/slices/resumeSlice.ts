@@ -207,6 +207,20 @@ export const getAiReview = createAsyncThunk<Resume, string, { rejectValue: strin
     }
   }
 );
+//---------------------------------
+export const patchResume = createAsyncThunk<
+  Resume,
+  { id: string; patch: Partial<Resume> },
+  { rejectValue: string }
+>("resume/patch", async ({ id, patch }, { rejectWithValue }) => {
+  try {
+    const res = await api.patch(`/resume/${id}`, patch);
+    return res.data.data;
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message ?? "이력서 통합 수정 실패");
+  }
+});
+//------------------------------
 
 const resumeSlice = createSlice({
   name: "resume",
@@ -374,6 +388,23 @@ const resumeSlice = createSlice({
       state.loading = false;
       state.error = action.payload as string;
     })
+    /** ✅ 통합 패치 리듀서 */
+    .addCase(patchResume.pending, (state) => {
+      state.loading = true;
+    })
+    .addCase(patchResume.fulfilled, (state, action) => {
+      state.loading = false;
+      state.error = "";
+      const updated = action.payload;
+      state.resume = updated;
+      const idx = state.resumes.findIndex((r) => r.id === updated.id);
+      if (idx !== -1) state.resumes[idx] = updated;
+      else state.resumes.unshift(updated);
+    })
+    .addCase(patchResume.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
   },
 });
 
