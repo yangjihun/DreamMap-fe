@@ -35,37 +35,40 @@ const buttonVariants = cva(
   }
 );
 
-interface ButtonProps
+export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }
 
-function Button({
-  className,
-  variant,
-  size,
-  asChild = false,
-  ...props
-}: ButtonProps) {
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, type, ...props }, ref) => {
+    const classes = cn(buttonVariants({ variant, size, className }));
 
-  if (asChild) {
+    if (asChild) {
+      // asChild 사용 시에도 ref가 실제 DOM까지 전달되어야 Radix 트리거가 동작함
+      return (
+        <Slot
+          ref={ref as any}
+          data-slot="button"
+          className={classes}
+          {...props}
+        />
+      );
+    }
+
     return (
-      <Slot
+      <button
+        ref={ref}
+        // 폼 안에서 submit으로 오인되는 걸 방지
+        type={type ?? "button"}
         data-slot="button"
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={classes}
         {...props}
       />
     );
   }
+);
+Button.displayName = "Button";
 
-  return (
-    <button
-      data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
-    />
-  );
-}
-
-export { Button, buttonVariants };
+export { buttonVariants };

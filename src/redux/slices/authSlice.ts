@@ -62,7 +62,17 @@ export const login = createAsyncThunk<AuthResponse, LoginPayload, { rejectValue:
       const response = await api.post<AuthResponse>("/auth/login", payload);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data ?? { message: "네트워크 오류가 발생했습니다." });
+      /*
+      * thunk 실패 처리를 위해 rejectWithValue를 사용합니다.
+      * 시나리오 1: 백엔드 응답이 있는 경우 (e.g., 비밀번호 오류)
+      * - api.ts 인터셉터가 가공한 error 객체({ message: "..." })가 그대로 사용됩니다.
+      *
+      * 시나리오 2: 예기치 못한 오류 (e.g., 진짜 네트워크 단절, 인터셉터 로직 오류)
+      * - catch 블록의 'error'가 nullish(null 또는 undefined)일 수 있습니다.
+      * - 이때 '??' 연산자가 동작하여, 오른쪽에 정의된 기본 에러 객체를 사용함으로써
+      * 어떤 상황에서든 일관된 에러 페이로드를 보장합니다.
+      */
+      return rejectWithValue(error ?? { message: "네트워크 오류가 발생했습니다." });  
     }
   }
 );
@@ -77,7 +87,7 @@ export const signup = createAsyncThunk<AuthResponse, SignupPayload, { rejectValu
       const response = await api.post<AuthResponse>("/auth/signup", payload);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data ?? { message: "네트워크 오류가 발생했습니다." });
+      return rejectWithValue(error ?? { message: "네트워크 오류가 발생했습니다." });
     }
   }
 );
@@ -89,7 +99,7 @@ export const loginWithToken = createAsyncThunk<User, void, { rejectValue: AuthEr
       const response = await api.get<User>("/user/me");
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data.message ?? { message: "유효하지 않은 토큰입니다." });
+      return rejectWithValue(error ?? { message: "유효하지 않은 토큰입니다." });
     }
   }
 );

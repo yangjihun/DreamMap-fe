@@ -11,8 +11,9 @@ const PrivateRoute = () => {
     // 로딩 중임을 나타내는 간단한 UI를 보여줍니다.
     return <div>Loading...</div>; 
   }
+
   // 인증된 사용자는 요청된 페이지를 보여주고, 그렇지 않으면 로그인 페이지로 리디렉션
-  return isAuthenticated ? <Outlet /> : <Navigate to="/" />;
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" />;
 };
 
 export default PrivateRoute;
