@@ -22,9 +22,17 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "../redux/hooks";
-import { deleteResume, toggleStar, fetchResumes, setError } from "../redux/slices/resumeSlice";
+import { deleteResume, toggleStar, fetchResumes } from "../redux/slices/resumeSlice";
 import { logout } from "../redux/slices/authSlice";
 import { useEffect } from "react";
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("ko-KR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
 
 const templates = [
   {
@@ -49,7 +57,6 @@ export default function DashboardPage() {
   useEffect(() => {
     if (error) {
       alert(error);
-      dispatch(setError(error));
     }
   }, [error, dispatch]);
 
@@ -65,32 +72,6 @@ export default function DashboardPage() {
 
   const handleLogout = () => {
     dispatch(logout());
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "draft":
-        return "text-muted-foreground";
-      case "analyzed":
-        return "text-blue-600";
-      case "completed":
-        return "text-green-600";
-      default:
-        return "text-muted-foreground";
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "draft":
-        return "작성 중";
-      case "analyzed":
-        return "분석 완료";
-      case "completed":
-        return "완성됨";
-      default:
-        return "알 수 없음";
-    }
   };
 
   return (
@@ -239,14 +220,16 @@ export default function DashboardPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="h-6 w-6 p-0 opacity-100 group-hover:opacity-100 transition-opacity"
                               disabled={loading}
                               onClick={(e) => e.stopPropagation()}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onPointerDown={(e) => e.stopPropagation()}
                             >
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-white">
+                          <DropdownMenuContent align="end" className="bg-white z-50">
                             <DropdownMenuItem onClick={() => navigate(`/resume/${resume.id}`)}>
                               <Eye className="mr-2 h-4 w-4" />
                               <span>보기</span>
@@ -269,13 +252,6 @@ export default function DashboardPage() {
 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full ${getStatusColor(
-                              resume.status
-                            )} bg-gray-100`}
-                          >
-                            {getStatusText(resume.status)}
-                          </span>
                         </div>
                         <Button
                           variant="ghost"
@@ -298,7 +274,7 @@ export default function DashboardPage() {
                       </div>
 
                       <p className="text-xs text-gray-500 mt-2">
-                        {resume.lastModified}
+                        {formatDate(resume.updatedAt)}
                       </p>
                     </div>
                   </CardContent>

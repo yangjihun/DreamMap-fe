@@ -25,8 +25,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { 
   createNewResumeFromFile,
-  createNewResumeWithSections,
-  setError 
+  createNewResumeWithSections
 } from "../redux/slices/resumeSlice";
 
 type UploadMethod = "file" | "text";
@@ -101,12 +100,8 @@ export default function UploadPage() {
     }
 
     try {
-      if (error) {
-        dispatch(setError(error));
-      }
-
+      if (error) throw new Error(error);
       let result;
-      
       if (uploadMethod === "text") {
         const sections: any = {};
         Object.entries(sectionContents).forEach(([key, content]) => {

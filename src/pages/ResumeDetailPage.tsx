@@ -15,7 +15,6 @@ import {
   Calendar,
   Hash,
   TrendingUp,
-  Trash2,
   Plus,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -24,10 +23,7 @@ import {
   updateItemText,
   updateResumeTitle,
   updateSessionTitle,
-  deleteSession,
-  addItemToSession,
-  clearResume,
-  setError,
+  addItemToSession
 } from "@/redux/slices/resumeSlice";
 
 export default function ResumeDetailPage() {
@@ -53,15 +49,11 @@ export default function ResumeDetailPage() {
     if (id) {
       dispatch(getResume(id));
     }
-    return () => {
-      dispatch(clearResume());
-    };
   }, [id, dispatch]);
 
   useEffect(() => {
     if (error) {
       alert(error);
-      dispatch(setError(error));
     }
   }, [error, dispatch]);
 
@@ -139,15 +131,6 @@ export default function ResumeDetailPage() {
   const cancelSessionTitleEdit = () => {
     setEditingSessionTitle(null);
     setTempSessionTitle("");
-  };
-
-  const handleDeleteSession = async (sessionKey: string) => {
-    if (!id) return;
-    
-    const confirmed = window.confirm(`"${sessionKey}" 섹션을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`);
-    if (confirmed) {
-      await dispatch(deleteSession({ resumeId: id, sessionKey }));
-    }
   };
 
   const startAddingItem = (sessionKey: string) => {
@@ -365,14 +348,6 @@ export default function ResumeDetailPage() {
                           className="opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <Edit3 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          onClick={() => handleDeleteSession(session.key)}
-                          variant="ghost"
-                          size="sm"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     )}

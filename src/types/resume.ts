@@ -20,8 +20,14 @@ export interface Resume {
   totalCount: number;
   score: number;
   sessions: ResumeSession[];
-  status: string;
+  status: any;
   starred: boolean;
-  lastModified: string;
   updatedAt: string;
+}
+
+export interface ResumeState {
+  resumes: Resume[];
+  resume: Resume | null;
+  loading: boolean;
+  error: string | null;
 }
