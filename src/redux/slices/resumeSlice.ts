@@ -36,22 +36,6 @@ export const deleteResume = createAsyncThunk<string, string, { rejectValue: stri
   }
 );
 
-// 제목 수정
-export const updateResumeTitle = createAsyncThunk<
-  { id: string; title: string },
-  { id: string; title: string },
-  { rejectValue: string }
->("resume/updateTitle", async (payload, { rejectWithValue }) => {
-  try {
-    const res = await api.put(`/resume/${payload.id}`, {
-      title: payload.title,
-    });
-    return { id: payload.id, title: res.data.data.title };
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message ?? "이력서 제목 수정 실패");
-  }
-});
-
 // 상세 조회
 export const getResume = createAsyncThunk<Resume, string, { rejectValue: string }>(
   "resume/fetchById",
@@ -207,7 +191,7 @@ export const getAiReview = createAsyncThunk<Resume, string, { rejectValue: strin
     }
   }
 );
-//---------------------------------
+
 export const patchResume = createAsyncThunk<
   Resume,
   { id: string; patch: Partial<Resume> },
@@ -220,7 +204,6 @@ export const patchResume = createAsyncThunk<
     return rejectWithValue(error.response?.data?.message ?? "이력서 통합 수정 실패");
   }
 });
-//------------------------------
 
 const resumeSlice = createSlice({
   name: "resume",
@@ -250,22 +233,6 @@ const resumeSlice = createSlice({
       if (state.resume?.id === action.payload) state.resume = null;
     })
     .addCase(deleteResume.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.payload as string;
-    })
-    .addCase(updateResumeTitle.pending, (state) => {
-      state.loading = true;
-    })
-    .addCase(updateResumeTitle.fulfilled, (state, action) => {
-      state.loading = false;
-      state.error = '';
-      const resume = state.resumes.find(x => x.id === action.payload.id);
-      if (resume) resume.title = action.payload.title;
-      if (state.resume?.id === action.payload.id) {
-        state.resume.title = action.payload.title;
-      }
-    })
-    .addCase(updateResumeTitle.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload as string;
     })
@@ -377,7 +344,6 @@ const resumeSlice = createSlice({
     .addCase(getAiReview.fulfilled, (state, action) => {
       state.loading = false;
       state.error = '';
-      // 서버가 리뷰가 반영된 최신 Resume 전체를 반환한다고 가정
       const updated = action.payload;
       state.resume = updated;
       const idx = state.resumes.findIndex(r => r.id === updated.id);
@@ -388,7 +354,6 @@ const resumeSlice = createSlice({
       state.loading = false;
       state.error = action.payload as string;
     })
-    /** ✅ 통합 패치 리듀서 */
     .addCase(patchResume.pending, (state) => {
       state.loading = true;
     })

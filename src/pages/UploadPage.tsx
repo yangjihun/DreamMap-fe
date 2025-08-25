@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Button } from "../components/ui/button";
 import {
   Card,
@@ -9,8 +9,7 @@ import {
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
-
+import * as Tabs from "@radix-ui/react-tabs";
 import {
   Upload,
   FileText,
@@ -20,176 +19,203 @@ import {
   AlertCircle,
   File,
   X,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import { 
+import {
   createNewResumeFromFile,
-  createNewResumeWithSections
+  createNewResumeWithSections,
 } from "../redux/slices/resumeSlice";
 
 type UploadMethod = "file" | "text";
+
+type DraftSection = {
+  id: string;
+  title: string;
+  text: string;
+  key: string; // 서버에 보낼 세션 key (slug)
+};
+
+function slugify(raw: string) {
+  const base = (raw ?? "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64);
+  const safe = base || "section";
+  return /^[a-z]/.test(safe) ? safe : `sec-${safe}`;
+}
+
+function uniqueKey(baseTitle: string, existing: string[]) {
+  const base = slugify(baseTitle);
+  let k = base;
+  let i = 1;
+  while (existing.includes(k)) {
+    k = `${base}-${i++}`;
+  }
+  return k;
+}
 
 export default function UploadPage() {
   const [uploadMethod, setUploadMethod] = useState<UploadMethod>("file");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [resumeTitle, setResumeTitle] = useState("");
-  
-  const [sectionContents, setSectionContents] = useState({
-    intro: { text: "", title: "" },
-    body: { text: "", title: "" },
-    closing: { text: "", title: "" },
-  });
-  
+
+  // 🔹 동적 섹션: 기본 1개만 제공, 원하는 만큼 추가/삭제 가능
+  const [sections, setSections] = useState<DraftSection[]>([
+    { id: crypto.randomUUID(), title: "", text: "", key: "intro" },
+  ]);
+
+  // 파일 업로드 시 담을 섹션 제목(선택) → 없으면 "intro"
+  const [fileSectionTitle, setFileSectionTitle] = useState("");
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { loading, error } = useAppSelector((state) => state.resume);
 
-
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-    }
+    if (file) setSelectedFile(file);
   };
 
-  const handleSectionTextChange = (
-    section: "intro" | "body" | "closing", 
-    field: "text" | "title", 
-    value: string
-  ) => {
-    setSectionContents(prev => ({
+  const addSection = () => {
+    const existingKeys = sections.map((s) => s.key);
+    const key = uniqueKey(`section-${sections.length + 1}`, existingKeys);
+    setSections((prev) => [
       ...prev,
-      [section]: {
-        ...prev[section],
-        [field]: value
-      }
-    }));
+      { id: crypto.randomUUID(), title: "", text: "", key },
+    ]);
+  };
+
+  const removeSection = (id: string) => {
+    setSections((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  const updateSection = (id: string, patch: Partial<DraftSection>) => {
+    setSections((prev) =>
+      prev.map((s) => {
+        if (s.id !== id) return s;
+        const next = { ...s, ...patch };
+        // 제목이 바뀌면 key도 자연스럽게 동기화(사용자가 직접 고치게 하고 싶으면 이 부분 제거)
+        if (typeof patch.title === "string") {
+          const existingKeys = prev
+            .filter((x) => x.id !== id)
+            .map((x) => x.key);
+          next.key = uniqueKey(patch.title || "section", existingKeys);
+        }
+        return next;
+      })
+    );
   };
 
   const handleAnalyze = async () => {
-    // 백엔드 연결 테스트
     try {
-      const testResponse = await fetch("http://localhost:5000/api/resume/all");
-      if (!testResponse.ok) {
-        console.error("백엔드 서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요.");
-      }
-    } catch (connectionError) {
-      console.error("백엔드 연결 실패:", connectionError);
-      return;
-    }
+      // 간단 연결 확인(선택)
+      // const testResponse = await fetch("http://localhost:5000/api/resume/all");
 
-    if (uploadMethod === "text") {
-      const hasContent = Object.values(sectionContents).some(section => 
-        section.text && section.text.trim()
-      );
-      if (!hasContent) {
-        alert("적어도 하나의 섹션에는 내용을 입력해주세요.");
+      if (!resumeTitle.trim()) {
+        alert("Resume 제목을 입력해주세요.");
         return;
       }
-    }
-    
-    if (uploadMethod === "file" && !selectedFile) {
-      alert("파일을 선택해주세요.");
-      return;
-    }
 
-    if (!resumeTitle.trim()) {
-      alert("Resume 제목을 입력해주세요.");
-      return;
-    }
-
-    try {
-      if (error) throw new Error(error);
-      let result;
       if (uploadMethod === "text") {
-        const sections: any = {};
-        Object.entries(sectionContents).forEach(([key, content]) => {
-          if (content.text && content.text.trim()) {
-            sections[key] = {
-              text: content.text,
-              title: content.title || undefined,
-            };
-          }
+        const filled = sections.filter((s) => s.text.trim().length > 0);
+        if (filled.length === 0) {
+          alert("적어도 하나의 섹션에 내용을 입력해주세요.");
+          return;
+        }
+
+        // 🔹 서버가 이해하는 형태로 변환: Record<string, { text, title? }>
+        const payloadSections: Record<string, { text: string; title?: string }> =
+          {};
+        filled.forEach((s) => {
+          const key = s.key || slugify(s.title || "section");
+          payloadSections[key] = {
+            text: s.text.trim(),
+            title: s.title.trim() || undefined,
+          };
         });
 
-        console.log("Creating new resume with sections:", { resumeTitle, sections });
-        result = await dispatch(createNewResumeWithSections({
-          resumeTitle: resumeTitle,
-          sections: sections,
-        })).unwrap();
-        console.log("Resume creation result:", result);
+        const result = await dispatch(
+          createNewResumeWithSections({
+            resumeTitle: resumeTitle.trim(),
+            sections: payloadSections,
+          })
+        ).unwrap();
+
+        if (result) navigate(`/analysis/${result.id}`);
       } else {
-        result = await dispatch(createNewResumeFromFile({
-          file: selectedFile!,
-          sessionKey: "intro",
-          itemTitle: undefined,
-          resumeTitle: resumeTitle,
-        })).unwrap();
-      }
+        if (!selectedFile) {
+          alert("파일을 선택해주세요.");
+          return;
+        }
+        // 파일을 어느 섹션에 넣을지: 제목으로부터 key 생성(없으면 intro)
+        const key = fileSectionTitle.trim()
+          ? slugify(fileSectionTitle.trim())
+          : "intro";
 
-      if (result) {
-        navigate(`/analysis/${result.id}`);
+        const result = await dispatch(
+          createNewResumeFromFile({
+            file: selectedFile,
+            sessionKey: key,
+            itemTitle: undefined,
+            resumeTitle: resumeTitle.trim(),
+          })
+        ).unwrap();
+
+        if (result) navigate(`/analysis/${result.id}`);
       }
-      
-    } catch (error: any) {
-      console.error("Resume 생성 중 오류:", error);
-      console.error("Error details:", error.response?.data || error);
-      alert(error.message || error.response?.data?.error || "Resume 생성에 실패했습니다.");
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.error ||
+        err?.message ||
+        "Resume 생성에 실패했습니다.";
+      alert(msg);
+      console.error("Resume 생성 중 오류:", err);
     }
-  };
-
-  const removeFile = () => {
-    setSelectedFile(null);
   };
 
   const isAnalyzeDisabled = () => {
     if (loading) return true;
     if (uploadMethod === "text") {
-      const hasContent = Object.values(sectionContents).some(section => 
-        section.text && section.text.trim()
-      );
-      return !hasContent;
+      return sections.every((s) => !s.text.trim());
     }
     if (uploadMethod === "file") return !selectedFile;
     return false;
   };
 
   const getStatusMessage = () => {
-    if (loading) {
-      return "Resume을 생성하고 있습니다...";
-    }
-    if (error) {
-      return error || "오류가 발생했습니다.";
-    }
+    if (loading) return "Resume을 생성하고 있습니다...";
+    if (error) return error || "오류가 발생했습니다.";
     return "";
   };
 
   const getStatusIcon = () => {
-    if (loading) {
-      return <Loader2 className="h-5 w-5 animate-spin" />;
-    }
-    if (error) {
-      return <AlertCircle className="h-5 w-5 text-red-600" />;
-    }
+    if (loading) return <Loader2 className="h-5 w-5 animate-spin" />;
+    if (error) return <AlertCircle className="h-5 w-5 text-red-600" />;
     return null;
   };
+
+  const totalChars = useMemo(
+    () => sections.reduce((acc, s) => acc + s.text.length, 0),
+    [sections]
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            새 이력서 생성
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">새 이력서 생성</h1>
           <p className="text-lg text-gray-600">
             새로운 이력서를 생성합니다. 파일을 업로드하거나 텍스트를 직접 입력하세요.
           </p>
         </div>
 
-        
-        {/* Upload Settings */}
+        {/* 제목 */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -209,16 +235,14 @@ export default function UploadPage() {
                 value={resumeTitle}
                 onChange={(e) => setResumeTitle(e.target.value)}
                 className="border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                required={true}
+                required
               />
-              <p className="text-sm text-gray-500 mt-2">
-                새 이력서의 제목을 입력해주세요
-              </p>
+              <p className="text-sm text-gray-500 mt-2">새 이력서의 제목을 입력해주세요</p>
             </div>
           </CardContent>
         </Card>
 
-        {/* Upload Method Selection */}
+        {/* 업로드 방식 */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -227,36 +251,36 @@ export default function UploadPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs
+            <Tabs.Root
               value={uploadMethod}
-              onValueChange={(value: string) =>
-                setUploadMethod(value as UploadMethod)
-              }
+              onValueChange={(value) => setUploadMethod(value as UploadMethod)}
             >
-              <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg">
-                <TabsTrigger
-                  value="file"
+              <Tabs.List className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg">
+                <button
+                  data-state={uploadMethod === "file" ? "active" : "inactive"}
                   className="flex items-center justify-center py-3 px-6 rounded-md data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm transition-all duration-200"
+                  onClick={() => setUploadMethod("file")}
+                  type="button"
                 >
                   <File className="h-5 w-5 mr-2" />
                   파일 업로드
-                </TabsTrigger>
-                <TabsTrigger
-                  value="text"
+                </button>
+                <button
+                  data-state={uploadMethod === "text" ? "active" : "inactive"}
                   className="flex items-center justify-center py-3 px-6 rounded-md data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm transition-all duration-200"
+                  onClick={() => setUploadMethod("text")}
+                  type="button"
                 >
                   <FileText className="h-5 w-5 mr-2" />
                   텍스트 입력
-                </TabsTrigger>
-              </TabsList>
+                </button>
+              </Tabs.List>
 
-              <TabsContent value="file" className="mt-6">
-                <div className="space-y-4">
+              {/* 파일 */}
+              {uploadMethod === "file" && (
+                <div className="mt-6 space-y-6">
                   <div>
-                    <Label
-                      htmlFor="file-upload"
-                      className="text-base font-medium text-gray-700 mb-3 block"
-                    >
+                    <Label className="text-base font-medium text-gray-700 mb-3 block">
                       이력서 파일 선택
                     </Label>
                     <div className="mt-2">
@@ -274,7 +298,7 @@ export default function UploadPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={removeFile}
+                            onClick={() => setSelectedFile(null)}
                             className="text-blue-600 hover:text-blue-800"
                           >
                             <X className="h-4 w-4" />
@@ -285,127 +309,91 @@ export default function UploadPage() {
                           <div className="space-y-4 text-center">
                             <Upload className="mx-auto h-16 w-16 text-gray-400" />
                             <div className="space-y-2">
-                              <Label
-                                htmlFor="file-upload"
-                                className="relative cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 inline-block"
-                              >
+                              <Label className="relative cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 inline-block">
                                 <span className="flex items-center">
                                   <File className="h-4 w-4 mr-2" />
                                   파일 업로드
                                 </span>
                                 <Input
-                                  id="file-upload"
-                                  name="file-upload"
                                   type="file"
                                   className="sr-only"
                                   accept=".txt,.doc,.docx,.pdf"
                                   onChange={handleFileSelect}
                                 />
                               </Label>
-                              <p className="text-sm text-gray-600">
-                                또는 드래그 앤 드롭
-                              </p>
                             </div>
-                            <p className="text-xs text-gray-500">
-                              TXT, DOC, DOCX, PDF 파일 지원
-                            </p>
+                            <p className="text-xs text-gray-500">PDF 파일 지원</p>
                           </div>
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
-              </TabsContent>
+              )}
 
-              <TabsContent value="text" className="mt-6">
-                <div className="space-y-6">
-                  <p className="text-base text-gray-700 mb-4">
-                    이력서를 3개 섹션으로 나누어 입력하세요. 모든 섹션을 입력할 필요는 없습니다.
-                  </p>
-                  
-                  {/* 도입부 섹션 */}
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <Label className="text-base font-medium text-gray-700 mb-3 block">
-                      🌟 도입부 - 자기소개, 목표
-                    </Label>
-                    <Input
-                      placeholder="예: 학력, 자기소개, 목표 등"
-                      value={sectionContents.intro.title}
-                      onChange={(e) => handleSectionTextChange("intro", "title", e.target.value)}
-                      className="mb-3 border-gray-200 focus:border-blue-500"
-                    />
-                    <Textarea
-                      placeholder="자기소개, 목표, 가치관 등을 입력하세요..."
-                      value={sectionContents.intro.text}
-                      onChange={(e) => handleSectionTextChange("intro", "text", e.target.value)}
-                      rows={4}
-                      className="border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      {sectionContents.intro.text.length}자
+              {/* 텍스트 */}
+              {uploadMethod === "text" && (
+                <div className="mt-6 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <p className="text-base text-gray-700">
+                      필요한 만큼 섹션을 추가해 입력하세요. 총 {totalChars}자
                     </p>
+                    <Button variant="outline" onClick={addSection}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      섹션 추가
+                    </Button>
                   </div>
 
-                  {/* 본문 섹션 */}
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <Label className="text-base font-medium text-gray-700 mb-3 block">
-                      💼 본문 - 경력, 프로젝트, 기술
-                    </Label>
-                    <Input
-                      placeholder="예: 경력사항, 프로젝트, 기술스택 등"
-                      value={sectionContents.body.title}
-                      onChange={(e) => handleSectionTextChange("body", "title", e.target.value)}
-                      className="mb-3 border-gray-200 focus:border-blue-500"
-                    />
-                    <Textarea
-                      placeholder="경력, 프로젝트, 기술, 성과 등을 입력하세요..."
-                      value={sectionContents.body.text}
-                      onChange={(e) => handleSectionTextChange("body", "text", e.target.value)}
-                      rows={6}
-                      className="border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      {sectionContents.body.text.length}자
-                    </p>
-                  </div>
-
-                  {/* 마무리 섹션 */}
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <Label className="text-base font-medium text-gray-700 mb-3 block">
-                      🎯 마무리 - 포부, 다짐
-                    </Label>
-                    <Input
-                      placeholder="예: 포부, 다짐, 향후 계획 등"
-                      value={sectionContents.closing.title}
-                      onChange={(e) => handleSectionTextChange("closing", "title", e.target.value)}
-                      className="mb-3 border-gray-200 focus:border-blue-500"
-                    />
-                    <Textarea
-                      placeholder="포부, 다짐, 향후 계획 등을 입력하세요..."
-                      value={sectionContents.closing.text}
-                      onChange={(e) => handleSectionTextChange("closing", "text", e.target.value)}
-                      rows={4}
-                      className="border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      {sectionContents.closing.text.length}자
-                    </p>
-                  </div>
+                  {sections.map((s, idx) => (
+                    <div key={s.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <Label className="text-base font-medium text-gray-700">
+                          섹션 {idx + 1}
+                        </Label>
+                        {sections.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => removeSection(s.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      <div className="grid gap-3">
+                        <Input
+                          placeholder="섹션 제목 (예: 경력, 프로젝트, 기술)"
+                          value={s.title}
+                          onChange={(e) => updateSection(s.id, { title: e.target.value })}
+                          className="mb-2"
+                        />
+                        <Textarea
+                          placeholder="이 섹션에 들어갈 내용을 입력하세요..."
+                          value={s.text}
+                          onChange={(e) => updateSection(s.id, { text: e.target.value })}
+                          rows={idx === 0 ? 4 : 5}
+                        />
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <span>문자수: {s.text.length}자</span>
+                          <span>세션 키: <code>{s.key}</code></span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
 
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <p className="text-sm text-blue-700">
-                      💡 <strong>팁:</strong> 적어도 하나의 섹션에는 내용을 입력해야 합니다. 
-                      각 섹션의 제목은 선택사항이며, 입력하지 않으면 기본 제목이 사용됩니다.
+                      💡 <strong>팁:</strong> 적어도 하나의 섹션에는 내용을 입력해야 합니다.
+                      제목은 선택사항이며, 비워두면 기본 제목이 사용됩니다.
                     </p>
                   </div>
                 </div>
-              </TabsContent>
-            </Tabs>
+              )}
+            </Tabs.Root>
           </CardContent>
         </Card>
 
-
-        {/* Analysis Button */}
+        {/* 생성 버튼 */}
         <Card className="mb-8">
           <CardContent className="pt-8 pb-8">
             <div className="text-center">
@@ -415,13 +403,12 @@ export default function UploadPage() {
                 size="lg"
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-12 py-4 text-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
-                {!loading && (
+                {!loading ? (
                   <>
                     <Sparkles className="h-6 w-6 mr-3" />
                     새 이력서 생성하기
                   </>
-                )}
-                {loading && (
+                ) : (
                   <>
                     {getStatusIcon()}
                     <span className="ml-3">{getStatusMessage()}</span>
@@ -458,9 +445,7 @@ export default function UploadPage() {
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
                 <FileText className="h-6 w-6 text-green-600" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">
-                맞춤형 피드백
-              </h3>
+              <h3 className="font-semibold text-gray-900 mb-2">맞춤형 피드백</h3>
               <p className="text-sm text-gray-600">
                 IT 업계 표준에 맞는 구체적인 개선 방향을 제시합니다
               </p>
