@@ -194,6 +194,10 @@ export default function SignupModal({
       case 0:
         return (
           <div className="space-y-4">
+             <div>
+              <Label htmlFor="name">이름</Label>
+              <Input id="name" placeholder="이름을 입력하세요" value={signupData.name} onChange={(e) => setSignupData({ ...signupData, name: e.target.value })} />
+            </div>
             <div>
               <Label htmlFor="email">이메일</Label>
               <Input id="email" type="email" placeholder="이메일 주소를 입력하세요" value={signupData.email} onChange={(e) => setSignupData({ ...signupData, email: e.target.value })} />
@@ -206,10 +210,7 @@ export default function SignupModal({
               <Label htmlFor="confirmPassword">비밀번호 확인</Label>
               <Input id="confirmPassword" type="password" placeholder="비밀번호를 다시 입력하세요" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
             </div>
-            <div>
-              <Label htmlFor="name">이름</Label>
-              <Input id="name" placeholder="이름을 입력하세요" value={signupData.name} onChange={(e) => setSignupData({ ...signupData, name: e.target.value })} />
-            </div>
+           
           </div>
         );
       case 1:
@@ -263,9 +264,9 @@ export default function SignupModal({
       case 5:
         return (
           <div>
-            <Label htmlFor="location">거주 지역</Label>
+            <Label htmlFor="location">학습 희망 지역</Label>
             <Select value={signupData.location} onValueChange={(value) => setSignupData({ ...signupData, location: value })}>
-              <SelectTrigger><SelectValue placeholder="거주 지역을 선택하세요" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="학습 희망 지역을 선택하세요" /></SelectTrigger>
               <SelectContent>
                 {locations.map((location) => (<SelectItem key={location} value={location}>{location}</SelectItem>))}
               </SelectContent>
