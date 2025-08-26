@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import Header from "../components/ui/header";
 import {
   createNewResumeFromFile,
   createNewResumeWithSections,
@@ -66,6 +67,27 @@ const SectionCard: React.FC<{
   onChange: (id: string, patch: Partial<DraftSection>) => void;
   onRemove: (id: string) => void;
 }> = ({ section, index, canRemove, onChange, onRemove }) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const { selectionStart, value } = e.currentTarget;
+      const newValue =
+        value.substring(0, selectionStart) +
+        "\n• " +
+        value.substring(selectionStart);
+      onChange(section.id, { text: newValue });
+    }
+  };
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    let value = e.target.value;
+    if (value.length === 1 && value !== "•") {
+      value = "• " + value;
+    }
+    if (value.length === 0) {
+      value = "• ";
+    }
+    onChange(section.id, { text: value });
+  };
   return (
     <div className="border border-gray-200 rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
@@ -94,8 +116,8 @@ const SectionCard: React.FC<{
         <Textarea
           placeholder="이 섹션에 들어갈 내용을 입력하세요..."
           value={section.text}
-          onChange={(e) => onChange(section.id, { text: e.target.value })}
-          rows={index === 0 ? 4 : 5}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
         />
         <div className="flex items-center justify-between text-xs text-gray-500">
           <span>문자수: {section.text.length}자</span>
@@ -235,8 +257,9 @@ const UploadPage: React.FC = () => {
   }, [dispatch, navigate, resumeTitle, sections, selectedFile, uploadMethod]);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">
             새 이력서 생성

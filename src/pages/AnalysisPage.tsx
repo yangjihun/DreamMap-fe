@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { ResumeSession, ResumeItem } from "../types/resume";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import Header from "../components/ui/header";
 import {
   getResume,
   generateResumeWithReview,
@@ -163,6 +164,7 @@ export default function AnalysisPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Header />
       <div className="container mx-auto px-4 py-8 pb-32">
         {/* 헤더 */}
         <div className="flex items-center justify-between mb-8">
@@ -270,7 +272,7 @@ export default function AnalysisPage() {
                                     {item.title}
                                   </h4>
                                 )}
-                                <p className="text-gray-700 mb-2 whitespace-pre-line">
+                                <p className="text-gray-700 mb-2">
                                   {item.text}
                                 </p>
                                 {(item.startDate || item.endDate) && (

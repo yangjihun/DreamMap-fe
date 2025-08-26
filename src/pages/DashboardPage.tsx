@@ -1,6 +1,6 @@
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
-import { Avatar, AvatarFallback } from "../components/ui/avatar";
+import Header from "../components/ui/header";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,31 +8,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
-import {
-  FileText,
-  MoreVertical,
-  User,
-  Settings,
-  LogOut,
-  Sparkles,
-  Star,
-  Trash2,
-  Eye,
-  Search,
-} from "lucide-react";
+import { FileText, MoreVertical, Star, Trash2, Eye } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "../redux/hooks";
-import { deleteResume, toggleStar, fetchResumes } from "../redux/slices/resumeSlice";
+import {
+  deleteResume,
+  toggleStar,
+  fetchResumes,
+} from "../redux/slices/resumeSlice";
 import { logout } from "../redux/slices/authSlice";
 import { useEffect } from "react";
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("ko-KR", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
 
 const templates = [
   {
@@ -41,14 +34,13 @@ const templates = [
     description: "처음부터 시작하기",
     icon: FileText,
     color: "bg-blue-50 text-blue-600",
-  }
+  },
 ];
 
 export default function DashboardPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { resumes, loading, error } = useAppSelector((state) => state.resume);
-  const { user } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     dispatch(fetchResumes());
@@ -70,72 +62,9 @@ export default function DashboardPage() {
     }
   };
 
-  const handleLogout = () => {
-    dispatch(logout());
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Sparkles className="h-7 w-7 text-blue-600" />
-              <h1 className="text-xl font-medium text-gray-900">ResumeAI</h1>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="레쥬메 검색"
-                  className="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="relative h-8 w-8 rounded-full"
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-blue-600 text-white text-sm">
-                        {user?.name?.charAt(0) || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end">
-                  <div className="flex items-center justify-start gap-2 p-2">
-                    <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium text-gray-900">{user?.name}</p>
-                      <p className="w-[200px] truncate text-sm text-gray-500">
-                        {user?.email}
-                      </p>
-                    </div>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>프로필</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>설정</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>로그아웃</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         <section className="mb-12">
@@ -144,9 +73,11 @@ export default function DashboardPage() {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {templates.map((template) => (
-              <Link 
-                key={template.id} 
-                to={template.id === "1" ? "/upload?mode=new" : "/upload?mode=add"}
+              <Link
+                key={template.id}
+                to={
+                  template.id === "1" ? "/upload?mode=new" : "/upload?mode=add"
+                }
               >
                 <Card className="border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group bg-white">
                   <CardContent className="p-6 text-center">
@@ -176,7 +107,9 @@ export default function DashboardPage() {
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-500">이력서 목록을 불러오고 있습니다...</p>
+              <p className="text-gray-500">
+                이력서 목록을 불러오고 있습니다...
+              </p>
             </div>
           ) : resumes.length === 0 ? (
             <div className="text-center py-12">
@@ -222,8 +155,13 @@ export default function DashboardPage() {
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-white z-50">
-                            <DropdownMenuItem onClick={() => navigate(`/resume/${resume.id}`)}>
+                          <DropdownMenuContent
+                            align="end"
+                            className="bg-white z-50"
+                          >
+                            <DropdownMenuItem
+                              onClick={() => navigate(`/resume/${resume.id}`)}
+                            >
                               <Eye className="mr-2 h-4 w-4" />
                               <span>보기</span>
                             </DropdownMenuItem>
@@ -244,8 +182,7 @@ export default function DashboardPage() {
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                        </div>
+                        <div className="flex items-center space-x-2"></div>
                         <Button
                           variant="ghost"
                           size="sm"
