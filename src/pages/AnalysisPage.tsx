@@ -121,8 +121,10 @@ export default function AnalysisPage() {
   };
 
   useEffect(() => {
-    dispatch(getResume("68a7b8d77433cbd888394172"));
-  }, []);
+    if (id) {
+      dispatch(getResume(id));
+    }
+  }, [id]);
 
   const getSessionIcon = (key: string) => {
     switch (key) {
@@ -150,12 +152,12 @@ export default function AnalysisPage() {
     }
   };
 
-  const handleRoadmapCreate = () => {
+  /*const handleRoadmapCreate = () => {
     if (!!id) {
       dispatch(createRoadmap(id));
     }
     navigate(`/roadmap/${id}`);
-  };
+  };*/
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -358,7 +360,7 @@ export default function AnalysisPage() {
       </div>
 
       {/* 하단 고정된 다음 단계 카드 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
+      {/*<div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex-1">
@@ -380,7 +382,7 @@ export default function AnalysisPage() {
             </div>
           </div>
         </div>
-      </div>
+      </div>*/}
     </div>
   );
 }

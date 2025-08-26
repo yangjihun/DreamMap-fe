@@ -14,7 +14,8 @@ import { Textarea } from "./ui/textarea";
 import { X, ChevronLeft, ChevronRight, Check } from "lucide-react";
 
 // --- 인터페이스 및 데이터 ---
-export interface SignupData {  //로그인 페이지에서 사용 위해 export 
+export interface SignupData {
+  //로그인 페이지에서 사용 위해 export
   email: string;
   password: string;
   name: string;
@@ -34,7 +35,11 @@ interface SignupModalProps {
 }
 
 const steps = [
-  { id: 0, title: "계정 정보", description: "이메일, 비밀번호, 이름을 입력하세요" },
+  {
+    id: 0,
+    title: "계정 정보",
+    description: "이메일, 비밀번호, 이름을 입력하세요",
+  },
   { id: 1, title: "학교 정보", description: "학력 정보를 입력해주세요" },
   { id: 2, title: "전공", description: "전공 분야를 선택해주세요" },
   { id: 3, title: "경력", description: "경력 사항을 입력해주세요" },
@@ -75,7 +80,7 @@ const locations = [
   "경북",
   "경남",
   "제주",
-  "기타"
+  "기타",
 ];
 
 const jobCategories = [
@@ -91,11 +96,12 @@ const jobCategories = [
   "보안 엔지니어",
   "QA 엔지니어",
   "프로덕트 매니저",
-  "기타"
+  "기타",
 ];
 
 // --- 유효성 검사 헬퍼 함수 ---
-const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isValidEmail = (email: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 const isStrongPassword = (password: string) => password.length >= 8;
 
 // --- 컴포넌트 ---
@@ -116,7 +122,7 @@ export default function SignupModal({
     skills: [],
     location: "",
     desiredJob: "",
-    level: ""
+    level: "",
   });
   const [confirmPassword, setConfirmPassword] = useState("");
   const [skillInput, setSkillInput] = useState("");
@@ -194,40 +200,86 @@ export default function SignupModal({
       case 0:
         return (
           <div className="space-y-4">
-             <div>
+            <div>
               <Label htmlFor="name">이름</Label>
-              <Input id="name" placeholder="이름을 입력하세요" value={signupData.name} onChange={(e) => setSignupData({ ...signupData, name: e.target.value })} />
+              <Input
+                id="name"
+                placeholder="이름을 입력하세요"
+                value={signupData.name}
+                onChange={(e) =>
+                  setSignupData({ ...signupData, name: e.target.value })
+                }
+              />
             </div>
             <div>
               <Label htmlFor="email">이메일</Label>
-              <Input id="email" type="email" placeholder="이메일 주소를 입력하세요" value={signupData.email} onChange={(e) => setSignupData({ ...signupData, email: e.target.value })} />
+              <Input
+                id="email"
+                type="email"
+                placeholder="이메일 주소를 입력하세요"
+                value={signupData.email}
+                onChange={(e) =>
+                  setSignupData({ ...signupData, email: e.target.value })
+                }
+              />
             </div>
             <div>
               <Label htmlFor="password">비밀번호</Label>
-              <Input id="password" type="password" placeholder="6자 이상 입력하세요" value={signupData.password} onChange={(e) => setSignupData({ ...signupData, password: e.target.value })} />
+              <Input
+                id="password"
+                type="password"
+                placeholder="6자 이상 입력하세요"
+                value={signupData.password}
+                onChange={(e) =>
+                  setSignupData({ ...signupData, password: e.target.value })
+                }
+              />
             </div>
             <div>
               <Label htmlFor="confirmPassword">비밀번호 확인</Label>
-              <Input id="confirmPassword" type="password" placeholder="비밀번호를 다시 입력하세요" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="비밀번호를 다시 입력하세요"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
             </div>
-           
           </div>
         );
       case 1:
         return (
           <div>
             <Label htmlFor="school">학교명</Label>
-            <Input id="school" placeholder="졸업/재학 중인 학교를 입력하세요" value={signupData.school} onChange={(e) => setSignupData({ ...signupData, school: e.target.value })} />
+            <Input
+              id="school"
+              placeholder="졸업/재학 중인 학교를 입력하세요"
+              value={signupData.school}
+              onChange={(e) =>
+                setSignupData({ ...signupData, school: e.target.value })
+              }
+            />
           </div>
         );
       case 2:
         return (
           <div>
             <Label htmlFor="major">전공 분야</Label>
-            <Select value={signupData.major} onValueChange={(value) => setSignupData({ ...signupData, major: value })}>
-              <SelectTrigger><SelectValue placeholder="전공을 선택하세요" /></SelectTrigger>
+            <Select
+              value={signupData.major}
+              onValueChange={(value) =>
+                setSignupData({ ...signupData, major: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="전공을 선택하세요" />
+              </SelectTrigger>
               <SelectContent>
-                {majors.map((major) => (<SelectItem key={major} value={major}>{major}</SelectItem>))}
+                {majors.map((major) => (
+                  <SelectItem key={major} value={major}>
+                    {major}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -236,7 +288,15 @@ export default function SignupModal({
         return (
           <div>
             <Label htmlFor="experience">경력 사항</Label>
-            <Textarea id="experience" placeholder="보유한 경력이나 프로젝트 경험을 입력하세요" value={signupData.experience} onChange={(e) => setSignupData({ ...signupData, experience: e.target.value })} rows={4} />
+            <Textarea
+              id="experience"
+              placeholder="보유한 경력이나 프로젝트 경험을 입력하세요"
+              value={signupData.experience}
+              onChange={(e) =>
+                setSignupData({ ...signupData, experience: e.target.value })
+              }
+              rows={4}
+            />
           </div>
         );
       case 4:
@@ -245,15 +305,32 @@ export default function SignupModal({
             <div>
               <Label htmlFor="skills">보유 스킬</Label>
               <div className="flex space-x-2">
-                <Input id="skills" placeholder="스킬을 입력하고 Enter" value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyPress={(e) => e.key === "Enter" && addSkill()} />
-                <Button type="button" onClick={addSkill} size="sm">추가</Button>
+                <Input
+                  id="skills"
+                  placeholder="스킬을 입력하고 Enter"
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && addSkill()}
+                />
+                <Button type="button" onClick={addSkill} size="sm">
+                  추가
+                </Button>
               </div>
               {signupData.skills.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
                   {signupData.skills.map((skill, index) => (
-                    <div key={index} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                    <div
+                      key={index}
+                      className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+                    >
                       {skill}
-                      <button type="button" onClick={() => removeSkill(skill)} className="ml-2 text-blue-600 hover:text-blue-800"><X className="h-3 w-3" /></button>
+                      <button
+                        type="button"
+                        onClick={() => removeSkill(skill)}
+                        className="ml-2 text-blue-600 hover:text-blue-800"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -265,10 +342,21 @@ export default function SignupModal({
         return (
           <div>
             <Label htmlFor="location">학습 희망 지역</Label>
-            <Select value={signupData.location} onValueChange={(value) => setSignupData({ ...signupData, location: value })}>
-              <SelectTrigger><SelectValue placeholder="학습 희망 지역을 선택하세요" /></SelectTrigger>
+            <Select
+              value={signupData.location}
+              onValueChange={(value) =>
+                setSignupData({ ...signupData, location: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="학습 희망 지역을 선택하세요" />
+              </SelectTrigger>
               <SelectContent>
-                {locations.map((location) => (<SelectItem key={location} value={location}>{location}</SelectItem>))}
+                {locations.map((location) => (
+                  <SelectItem key={location} value={location}>
+                    {location}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -277,10 +365,21 @@ export default function SignupModal({
         return (
           <div>
             <Label htmlFor="desiredJob">희망 직무</Label>
-            <Select value={signupData.desiredJob} onValueChange={(value) => setSignupData({ ...signupData, desiredJob: value })}>
-              <SelectTrigger><SelectValue placeholder="희망 직무를 선택하세요" /></SelectTrigger>
+            <Select
+              value={signupData.desiredJob}
+              onValueChange={(value) =>
+                setSignupData({ ...signupData, desiredJob: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="희망 직무를 선택하세요" />
+              </SelectTrigger>
               <SelectContent>
-                {jobCategories.map((job) => (<SelectItem key={job} value={job}>{job}</SelectItem>))}
+                {jobCategories.map((job) => (
+                  <SelectItem key={job} value={job}>
+                    {job}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -296,30 +395,55 @@ export default function SignupModal({
       <Card className="w-full max-w-2xl mx-4">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div>
-            <CardTitle className="text-xl font-semibold">{steps[currentStep].title}</CardTitle>
-            <p className="text-sm text-gray-600 mt-1">{steps[currentStep].description}</p>
+            <CardTitle className="text-xl font-semibold">
+              {steps[currentStep].title}
+            </CardTitle>
+            <p className="text-sm text-gray-600 mt-1">
+              {steps[currentStep].description}
+            </p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="h-5 w-5" /></button>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </CardHeader>
 
         <CardContent className="space-y-6">
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }} />
+            <div
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+            />
           </div>
 
           {renderStepContent()}
 
           <div className="flex justify-between pt-4">
-            <Button variant="outline" onClick={handlePrev} disabled={currentStep === 0} className="flex items-center">
+            <Button
+              variant="outline"
+              onClick={handlePrev}
+              disabled={currentStep === 0}
+              className="flex items-center"
+            >
               <ChevronLeft className="h-4 w-4 mr-2" /> 이전
             </Button>
             <div className="flex space-x-2">
               {currentStep < steps.length - 1 ? (
-                <Button onClick={handleNext} disabled={!isStepValid()} className="flex items-center">
+                <Button
+                  onClick={handleNext}
+                  disabled={!isStepValid()}
+                  className="flex items-center"
+                >
                   다음 <ChevronRight className="h-4 w-4 ml-2" />
                 </Button>
               ) : (
-                <Button onClick={handleComplete} disabled={!isStepValid()} className="flex items-center bg-green-600 hover:bg-green-700">
+                <Button
+                  onClick={handleComplete}
+                  disabled={!isStepValid()}
+                  className="flex items-center bg-green-600 hover:bg-green-700"
+                >
                   <Check className="h-4 w-4 mr-2" /> 완료
                 </Button>
               )}

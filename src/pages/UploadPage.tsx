@@ -1,6 +1,11 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { Button } from "../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
@@ -18,9 +23,14 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import { createNewResumeFromFile, createNewResumeWithSections } from "../redux/slices/resumeSlice";
+import {
+  createNewResumeFromFile,
+  createNewResumeWithSections,
+  getAiReview,
+} from "../redux/slices/resumeSlice";
 
 type UploadMethod = "file" | "text";
+type ProcessStatus = "idle" | "uploading" | "reviewing" | "done" | "error";
 
 export type DraftSection = {
   id: string;
@@ -59,7 +69,9 @@ const SectionCard: React.FC<{
   return (
     <div className="border border-gray-200 rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
-        <Label className="text-base font-medium text-gray-700">섹션 {index + 1}</Label>
+        <Label className="text-base font-medium text-gray-700">
+          섹션 {index + 1}
+        </Label>
         {canRemove && (
           <Button
             variant="ghost"
@@ -97,6 +109,7 @@ const UploadPage: React.FC = () => {
   const [uploadMethod, setUploadMethod] = useState<UploadMethod>("file");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [resumeTitle, setResumeTitle] = useState("");
+  const [processStatus, setProcessStatus] = useState<ProcessStatus>("idle");
   const [sections, setSections] = useState<DraftSection[]>([
     { id: crypto.randomUUID(), title: "", text: "", key: "intro" },
   ]);
@@ -105,42 +118,57 @@ const UploadPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { loading, error } = useAppSelector((state) => state.resume);
 
-  const totalChars = useMemo(() => sections.reduce((acc, s) => acc + s.text.length, 0), [sections]);
-  const status = loading ? (error ? "error" : "loading") : error ? "error" : "idle";
+  const totalChars = useMemo(
+    () => sections.reduce((acc, s) => acc + s.text.length, 0),
+    [sections]
+  );
 
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) setSelectedFile(file);
-  }, []);
+  const handleFileSelect = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) setSelectedFile(file);
+    },
+    []
+  );
 
   const addSection = useCallback(() => {
     const existingKeys = sections.map((s) => s.key);
     const key = uniqueKey(`section-${sections.length + 1}`, existingKeys);
-    setSections((prev) => [...prev, { id: crypto.randomUUID(), title: "", text: "", key }]);
+    setSections((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), title: "", text: "", key },
+    ]);
   }, [sections]);
 
   const removeSection = useCallback((id: string) => {
     setSections((prev) => prev.filter((s) => s.id !== id));
   }, []);
 
-  const updateSection = useCallback((id: string, patch: Partial<DraftSection>) => {
-    setSections((prev) =>
-      prev.map((s) => {
-        if (s.id !== id) return s;
-        const next: DraftSection = { ...s, ...patch };
-        if (typeof patch.title === "string") {
-          const existingKeys = prev.filter((x) => x.id !== id).map((x) => x.key);
-          next.key = uniqueKey(patch.title || "section", existingKeys);
-        }
-        return next;
-      })
-    );
-  }, []);
+  const updateSection = useCallback(
+    (id: string, patch: Partial<DraftSection>) => {
+      setSections((prev) =>
+        prev.map((s) => {
+          if (s.id !== id) return s;
+          const next: DraftSection = { ...s, ...patch };
+          if (typeof patch.title === "string") {
+            const existingKeys = prev
+              .filter((x) => x.id !== id)
+              .map((x) => x.key);
+            next.key = uniqueKey(patch.title || "section", existingKeys);
+          }
+          return next;
+        })
+      );
+    },
+    []
+  );
 
   const isAnalyzeDisabled = useMemo(() => {
     if (loading) return true;
     if (!resumeTitle.trim()) return true;
-    return uploadMethod === "text" ? sections.every((s) => !s.text.trim()) : !selectedFile;
+    return uploadMethod === "text"
+      ? sections.every((s) => !s.text.trim())
+      : !selectedFile;
   }, [loading, resumeTitle, uploadMethod, sections, selectedFile]);
 
   const handleAnalyze = useCallback(async () => {
@@ -150,34 +178,57 @@ const UploadPage: React.FC = () => {
         return;
       }
 
+      setProcessStatus("uploading");
       if (uploadMethod === "text") {
         const filled = sections.filter((s) => s.text.trim().length > 0);
         if (filled.length === 0) {
           window.alert("적어도 하나의 섹션에 내용을 입력해주세요.");
           return;
         }
-        const payloadSections: Record<string, { text: string; title?: string }> = {};
+        const payloadSections: Record<
+          string,
+          { text: string; title?: string }
+        > = {};
         filled.forEach((s) => {
           const key = s.key || slugify(s.title || "section");
-          payloadSections[key] = { text: s.text.trim(), title: s.title.trim() || undefined };
+          payloadSections[key] = {
+            text: s.text.trim(),
+            title: s.title.trim() || undefined,
+          };
         });
 
         const result = await dispatch(
-          createNewResumeWithSections({ resumeTitle: resumeTitle.trim(), sections: payloadSections })
+          createNewResumeWithSections({
+            resumeTitle: resumeTitle.trim(),
+            sections: payloadSections,
+          })
         ).unwrap();
+        setProcessStatus("reviewing");
+        await dispatch(getAiReview(result.id));
+        setProcessStatus("done");
         if (result?.id) navigate(`/analysis/${result.id}`);
       } else {
         if (!selectedFile) {
           window.alert("파일을 선택해주세요.");
           return;
         }
+        setProcessStatus("uploading");
         const result = await dispatch(
-          createNewResumeFromFile({ file: selectedFile, sessionKey: "intro", itemTitle: undefined, resumeTitle: resumeTitle.trim() })
+          createNewResumeFromFile({
+            file: selectedFile,
+            sessionKey: "intro",
+            itemTitle: undefined,
+            resumeTitle: resumeTitle.trim(),
+          })
         ).unwrap();
+        setProcessStatus("done");
         if (result?.id) navigate(`/analysis/${result.id}`);
       }
     } catch (err: any) {
-      const msg = err?.response?.data?.error || err?.message || "Resume 생성에 실패했습니다.";
+      const msg =
+        err?.response?.data?.error ||
+        err?.message ||
+        "Resume 생성에 실패했습니다.";
       window.alert(msg);
       console.error("Resume 생성 중 오류:", err);
     }
@@ -187,8 +238,13 @@ const UploadPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">새 이력서 생성</h1>
-          <p className="text-lg text-gray-600">새로운 이력서를 생성합니다. 파일을 업로드하거나 텍스트를 직접 입력하세요.</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            새 이력서 생성
+          </h1>
+          <p className="text-lg text-gray-600">
+            새로운 이력서를 생성합니다. 파일을 업로드하거나 텍스트를 직접
+            입력하세요.
+          </p>
         </div>
 
         <Card className="mb-8">
@@ -208,7 +264,9 @@ const UploadPage: React.FC = () => {
                 className="border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                 required
               />
-              <p className="text-sm text-gray-500 mt-2">새 이력서의 제목을 입력해주세요</p>
+              <p className="text-sm text-gray-500 mt-2">
+                새 이력서의 제목을 입력해주세요
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -216,7 +274,8 @@ const UploadPage: React.FC = () => {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Sparkles className="h-5 w-5 mr-2 text-purple-600" /> 업로드 방법 선택
+              <Sparkles className="h-5 w-5 mr-2 text-purple-600" /> 업로드 방법
+              선택
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -226,7 +285,9 @@ const UploadPage: React.FC = () => {
                 aria-pressed={uploadMethod === "file"}
                 onClick={() => setUploadMethod("file")}
                 className={`flex items-center justify-center py-3 px-6 rounded-md transition-all duration-200 ${
-                  uploadMethod === "file" ? "bg-white text-blue-600 shadow-sm" : ""
+                  uploadMethod === "file"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : ""
                 }`}
               >
                 <FileIcon className="h-5 w-5 mr-2" /> 파일 업로드
@@ -236,7 +297,9 @@ const UploadPage: React.FC = () => {
                 aria-pressed={uploadMethod === "text"}
                 onClick={() => setUploadMethod("text")}
                 className={`flex items-center justify-center py-3 px-6 rounded-md transition-all duration-200 ${
-                  uploadMethod === "text" ? "bg-white text-blue-600 shadow-sm" : ""
+                  uploadMethod === "text"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : ""
                 }`}
               >
                 <FileText className="h-5 w-5 mr-2" /> 텍스트 입력
@@ -246,16 +309,27 @@ const UploadPage: React.FC = () => {
             {uploadMethod === "file" && (
               <div className="mt-6 space-y-6">
                 <div>
-                  <Label className="text-base font-medium text-gray-700 mb-3 block">이력서 파일 선택</Label>
+                  <Label className="text-base font-medium text-gray-700 mb-3 block">
+                    이력서 파일 선택
+                  </Label>
                   <div className="mt-2">
                     {selectedFile ? (
                       <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
                         <div className="flex items-center space-x-3">
                           <FileIcon className="h-5 w-5 text-blue-600" />
-                          <span className="text-sm font-medium text-blue-900">{selectedFile.name}</span>
-                          <span className="text-xs text-blue-600">({(selectedFile.size / 1024).toFixed(1)} KB)</span>
+                          <span className="text-sm font-medium text-blue-900">
+                            {selectedFile.name}
+                          </span>
+                          <span className="text-xs text-blue-600">
+                            ({(selectedFile.size / 1024).toFixed(1)} KB)
+                          </span>
                         </div>
-                        <Button variant="ghost" size="sm" onClick={() => setSelectedFile(null)} className="text-blue-600 hover:text-blue-800">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedFile(null)}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
@@ -266,12 +340,20 @@ const UploadPage: React.FC = () => {
                           <div className="space-y-2">
                             <Label className="relative cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 inline-block">
                               <span className="flex items-center">
-                                <FileIcon className="h-4 w-4 mr-2" /> 파일 업로드
+                                <FileIcon className="h-4 w-4 mr-2" /> 파일
+                                업로드
                               </span>
-                              <Input type="file" className="sr-only" accept=".pdf" onChange={handleFileSelect} />
+                              <Input
+                                type="file"
+                                className="sr-only"
+                                accept=".pdf"
+                                onChange={handleFileSelect}
+                              />
                             </Label>
                           </div>
-                          <p className="text-xs text-gray-500">PDF 파일만 지원합니다</p>
+                          <p className="text-xs text-gray-500">
+                            PDF 파일만 지원합니다
+                          </p>
                         </div>
                       </div>
                     )}
@@ -283,7 +365,9 @@ const UploadPage: React.FC = () => {
             {uploadMethod === "text" && (
               <div className="mt-6 space-y-6">
                 <div className="flex items-center justify-between">
-                  <p className="text-base text-gray-700">필요한 만큼 섹션을 추가해 입력하세요. 총 {totalChars}자</p>
+                  <p className="text-base text-gray-700">
+                    필요한 만큼 섹션을 추가해 입력하세요. 총 {totalChars}자
+                  </p>
                   <Button variant="outline" onClick={addSection}>
                     <Plus className="h-4 w-4 mr-2" /> 섹션 추가
                   </Button>
@@ -302,7 +386,9 @@ const UploadPage: React.FC = () => {
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <p className="text-sm text-blue-700">
-                    💡 <strong>팁:</strong> 적어도 하나의 섹션에는 내용을 입력해야 합니다. 제목은 선택사항이며, 비워두면 기본 제목이 사용됩니다.
+                    💡 <strong>팁:</strong> 적어도 하나의 섹션에는 내용을
+                    입력해야 합니다. 제목은 선택사항이며, 비워두면 기본 제목이
+                    사용됩니다.
                   </p>
                 </div>
               </div>
@@ -319,12 +405,22 @@ const UploadPage: React.FC = () => {
                 size="lg"
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-12 py-4 text-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
-                {status === "loading" ? (
+                {processStatus === "uploading" ? (
                   <>
                     <Loader2 className="h-6 w-6 mr-3 animate-spin" />
                     <span>Resume을 생성하고 있습니다...</span>
                   </>
-                ) : status === "error" ? (
+                ) : processStatus === "reviewing" ? (
+                  <>
+                    <Loader2 className="h-6 w-6 mr-3 animate-spin" />
+                    <span>Resume을 분석하고 있습니다...</span>
+                  </>
+                ) : processStatus === "done" ? (
+                  <>
+                    <CheckCircle className="h-6 w-6 mr-3 text-green-600" />
+                    <span>Resume 생성이 완료되었습니다.</span>
+                  </>
+                ) : processStatus === "error" ? (
                   <>
                     <AlertCircle className="h-6 w-6 mr-3 text-red-600" />
                     <span>오류가 발생했습니다. 다시 시도해주세요.</span>
@@ -346,7 +442,9 @@ const UploadPage: React.FC = () => {
                 <Sparkles className="h-6 w-6 text-blue-600" />
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">AI 분석</h3>
-              <p className="text-sm text-gray-600">최신 AI 기술로 이력서를 분석하고 개선점을 제안합니다</p>
+              <p className="text-sm text-gray-600">
+                최신 AI 기술로 이력서를 분석하고 개선점을 제안합니다
+              </p>
             </CardContent>
           </Card>
 
@@ -355,8 +453,12 @@ const UploadPage: React.FC = () => {
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
                 <FileText className="h-6 w-6 text-green-600" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">맞춤형 피드백</h3>
-              <p className="text-sm text-gray-600">IT 업계 표준에 맞는 구체적인 개선 방향을 제시합니다</p>
+              <h3 className="font-semibold text-gray-900 mb-2">
+                맞춤형 피드백
+              </h3>
+              <p className="text-sm text-gray-600">
+                IT 업계 표준에 맞는 구체적인 개선 방향을 제시합니다
+              </p>
             </CardContent>
           </Card>
 
@@ -366,7 +468,9 @@ const UploadPage: React.FC = () => {
                 <CheckCircle className="h-6 w-6 text-purple-600" />
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">즉시 결과</h3>
-              <p className="text-sm text-gray-600">몇 분 내에 분석 결과와 개선된 이력서를 받아보세요</p>
+              <p className="text-sm text-gray-600">
+                몇 분 내에 분석 결과와 개선된 이력서를 받아보세요
+              </p>
             </CardContent>
           </Card>
         </div>

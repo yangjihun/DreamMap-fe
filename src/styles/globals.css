@@ -21,7 +21,7 @@
     --accent-foreground: oklch(0.25 0 0); /* 진한 회색 텍스트 */
     --destructive: oklch(0.75 0.3 25); /* 더 밝은 빨간색 */
     --destructive-foreground: oklch(0.99 0 0); /* 흰색 텍스트 */
-    --border: oklch(0.88 0 0); /* 연한 회색 테두리 */
+    --border: oklch(0.92 0 0); /* 더 연한 회색 테두리 */
     --input: oklch(0.99 0 0); /* 흰색 입력 필드 */
     --ring: oklch(0.65 0.3 250); /* 더 밝은 파란색 포커스 링 */
     --chart-1: oklch(0.95 0 0);
@@ -36,7 +36,7 @@
     --sidebar-primary-foreground: oklch(0.99 0 0);
     --sidebar-accent: oklch(0.96 0 0);
     --sidebar-accent-foreground: oklch(0.25 0 0);
-    --sidebar-border: oklch(0.88 0 0);
+    --sidebar-border: oklch(0.92 0 0);
     --sidebar-ring: oklch(0.65 0.3 250);
     --font-source-sans: "Source Sans Pro", sans-serif;
     --font-playfair: "Playfair Display", serif;
@@ -60,7 +60,7 @@
     --accent-foreground: oklch(0.95 0 0); /* 밝은 텍스트 */
     --destructive: oklch(0.85 0.3 25); /* 더 밝은 빨간색 */
     --destructive-foreground: oklch(0.12 0 0); /* 어두운 텍스트 */
-    --border: oklch(0.3 0 0); /* 어두운 테두리지만 너무 어둡지 않게 */
+    --border: oklch(0.35 0 0); /* 더 연한 어두운 테두리 */
     --input: oklch(0.18 0 0); /* 어두운 입력 필드 */
     --ring: oklch(0.75 0.3 250); /* 더 밝은 파란색 포커스 링 */
     --chart-1: oklch(0.25 0 0);
@@ -74,7 +74,7 @@
     --sidebar-primary-foreground: oklch(0.12 0 0);
     --sidebar-accent: oklch(0.22 0 0);
     --sidebar-accent-foreground: oklch(0.95 0 0);
-    --sidebar-border: oklch(0.3 0 0);
+    --sidebar-border: oklch(0.35 0 0);
     --sidebar-ring: oklch(0.75 0.3 250);
   }
 }
