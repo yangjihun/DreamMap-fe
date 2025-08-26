@@ -21,7 +21,11 @@ import {
 } from "lucide-react";
 import { ResumeSession, ResumeItem } from "../types/resume";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import { getResume } from "../redux/slices/resumeSlice";
+import {
+  getResume,
+  generateResumeWithReview,
+} from "../redux/slices/resumeSlice";
+//import { createRoadmap } from "@/redux/slices/roadmapSlice";
 
 export default function AnalysisPage() {
   const dispatch = useAppDispatch();
@@ -108,7 +112,7 @@ export default function AnalysisPage() {
   const handleMergeFeedback = async () => {
     setIsGenerating(true);
     // 실제로는 백엔드 API 호출
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await dispatch(generateResumeWithReview(id || ""));
     setIsGenerating(false);
     alert("피드백이 반영된 새로운 이력서가 생성되었습니다!");
   };
