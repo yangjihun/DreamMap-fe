@@ -111,13 +111,14 @@ const SectionCard: React.FC<{
           placeholder="섹션 제목"
           value={section.title}
           onChange={(e) => onChange(section.id, { title: e.target.value })}
-          className="mb-2"
+          className="border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
         />
         <Textarea
           placeholder="이 섹션에 들어갈 내용을 입력하세요..."
           value={section.text}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          className="border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
         />
         <div className="flex items-center justify-between text-xs text-gray-500">
           <span>문자수: {section.text.length}자</span>

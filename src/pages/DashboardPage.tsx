@@ -16,7 +16,6 @@ import {
   toggleStar,
   fetchResumes,
 } from "../redux/slices/resumeSlice";
-import { logout } from "../redux/slices/authSlice";
 import { useEffect } from "react";
 
 const formatDate = (dateString: string) => {
