@@ -270,7 +270,7 @@ export default function AnalysisPage() {
                                     {item.title}
                                   </h4>
                                 )}
-                                <p className="text-gray-700 mb-2">
+                                <p className="text-gray-700 mb-2 whitespace-pre-line">
                                   {item.text}
                                 </p>
                                 {(item.startDate || item.endDate) && (

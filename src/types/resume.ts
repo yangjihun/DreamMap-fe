@@ -4,6 +4,8 @@ export interface ResumeItem {
   startDate?: string;
   endDate?: string;
   review?: string;
+  oldText?: string;
+  companyAddress?: string;
 }
 
 export interface ResumeSession {
@@ -23,6 +25,7 @@ export interface Resume {
   status: any;
   starred: boolean;
   updatedAt: string;
+  review: string;
 }
 
 export interface ResumeState {

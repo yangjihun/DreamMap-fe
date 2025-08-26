@@ -234,7 +234,7 @@ export const generateResumeWithReview = createAsyncThunk<
   { rejectValue: string }
 >("resume/generateResumeWithReview", async (id, { rejectWithValue }) => {
   try {
-    const res = await api.post(`/gemini/review/${id}`);
+    const res = await api.post(`/gemini/generate/${id}`);
     return res.data.data;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message ?? "AI 리뷰 실패");
