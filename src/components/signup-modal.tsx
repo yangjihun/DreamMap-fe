@@ -102,7 +102,7 @@ const jobCategories = [
 // --- 유효성 검사 헬퍼 함수 ---
 const isValidEmail = (email: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-const isStrongPassword = (password: string) => password.length >= 8;
+const isStrongPassword = (password: string) => password.length >= 6;
 
 // --- 컴포넌트 ---
 export default function SignupModal({
