@@ -1,37 +1,38 @@
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
-import {
-  Sparkles,
-  ArrowLeft,
-  Target,
-  Calendar,
-  BookOpen,
-  Users,
-} from "lucide-react";
-import { Link } from "react-router-dom";
+import { Target, BookOpen, Users } from "lucide-react";
+import { RoadmapTabs } from "@/components/roadmap/RoadmapTabs";
+import { useEffect, useState } from "react";
+import { RoadmapContent } from "@/components/roadmap/RoadmapContent";
+import { RoadmapHeader } from "@/components/roadmap/RoadmapHeader";
+import { Roadmap, RoadmapPeriod } from "@/types/roadmap";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { getRoadmap } from "@/redux/slices/roadmapSlice";
 
 export default function RoadmapPage() {
+  const dispatch = useAppDispatch();
+  const { roadmapPlans } = useAppSelector((state) => state.roadmap);
+  const [selectedPeriod, setSelectedPeriod] =
+    useState<RoadmapPeriod>("3months");
+  const [currentPlans, setCurrentPlans] = useState<Roadmap | undefined>();
+
+  useEffect(() => {
+    // if (id) dispatch(getRoadmap(id));
+    dispatch(getRoadmap("68a7dcd1a9308b5fbd2110e3"));
+  }, []);
+
+  useEffect(() => {
+    if (!roadmapPlans) return;
+    const findPlan = roadmapPlans.find(
+      (roadmap) => roadmap.period === selectedPeriod
+    );
+    setCurrentPlans(findPlan);
+  }, [selectedPeriod, roadmapPlans]);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Sparkles className="h-7 w-7 text-blue-600" />
-              <h1 className="text-xl font-medium text-gray-900">ResumeAI</h1>
-            </div>
-            <Link to="/dashboard">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                대시보드로 돌아가기
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <RoadmapHeader />
+      <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             커리어 로드맵
@@ -44,102 +45,11 @@ export default function RoadmapPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* 로드맵 내용 */}
           <div className="lg:col-span-2">
-            <Card className="bg-white border border-gray-200 shadow-sm mb-6">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  3개월 계획
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Target className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">
-                        기술 스택 강화
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        React, TypeScript, Node.js 심화 학습
-                      </p>
-                      <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
-                        <span className="flex items-center">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          1-3개월
-                        </span>
-                        <span className="flex items-center">
-                          <BookOpen className="h-3 w-3 mr-1" />
-                          온라인 강의
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white border border-gray-200 shadow-sm mb-6">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  6개월 계획
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Users className="h-4 w-4 text-green-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">
-                        프로젝트 경험 축적
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        오픈소스 기여 및 사이드 프로젝트 진행
-                      </p>
-                      <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
-                        <span className="flex items-center">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          4-6개월
-                        </span>
-                        <span className="flex items-center">
-                          <BookOpen className="h-3 w-3 mr-1" />
-                          실무 프로젝트
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white border border-gray-200 shadow-sm">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  1년 계획
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Target className="h-4 w-4 text-purple-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">전문성 확립</h4>
-                      <p className="text-sm text-gray-600">
-                        특정 도메인 전문가로 성장 및 네트워킹
-                      </p>
-                      <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
-                        <span className="flex items-center">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          7-12개월
-                        </span>
-                        <span className="flex items-center">
-                          <BookOpen className="h-3 w-3 mr-1" />
-                          컨퍼런스 참여
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <RoadmapTabs
+              selectedPeriod={selectedPeriod}
+              setSelectedPeriod={setSelectedPeriod}
+            />
+            <RoadmapContent currentPlans={currentPlans} />
           </div>
 
           {/* 사이드바 */}
@@ -189,7 +99,7 @@ export default function RoadmapPage() {
             </Card>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

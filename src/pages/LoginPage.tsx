@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "../components/ui/button";
 import {
   Card,
@@ -10,29 +10,51 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../redux/hooks";
-import { setUser, signup } from "../redux/slices/authSlice";
+import { login, signup } from "../redux/slices/authSlice";
 import SignupModal from "../components/signup-modal";
 import type { SignupData } from "@/components/signup-modal";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const handleLogin = (e: React.FormEvent) => {
+   // Redux 스토어에서 인증 상태를 가져옵니다.
+   const { isAuthenticated, isLoading } = useSelector((state: RootState) => state.auth);
+
+   useEffect(() => { //특별한 공용 페이지  로그인 페이지로 이동하는 것 막기 위함
+    if (isAuthenticated && !isLoading) {
+      navigate("/dashboard"); 
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // 실제 로그인 로직은 여기에 구현
-    //dispatch(setUser({ email, name: "사용자" }));
-    navigate("/dashboard");
+    setError(null);
+    try {
+      // 1. 입력된 이메일과 비밀번호로 login thunk를 디스패치합니다.
+      await dispatch(login({ email, password })).unwrap();
+
+      // 2. unwrap()이 성공적으로 완료되면 (로그인 성공 시) 대시보드로 이동합니다.
+      navigate("/dashboard");
+    } catch (error: any) {
+      // 3. unwrap()이 에러를 던지면 (로그인 실패 시) 에러를 처리합니다.
+     
+      setError(error.message || "로그인에 실패했습니다. 다시 시도해주세요.");
+    }
   };
 
 
   // 회원가입 완료 후 자동 로그인
   const handleSignupComplete = async (data: SignupData) => {
     console.log("회원가입 완료:", data);
+    setError(null);
     try {
       // signup thunk에 전달할 페이로드 생성
       const backendPayload = { 
@@ -55,9 +77,10 @@ export default function LoginPage() {
   
       // 회원가입 성공 후 대시보드로 이동
       navigate("/dashboard");
-    } catch (error) {
+    } catch (error: any) {
       console.error("회원가입 실패:", error);
       // 필요하다면 사용자에게 에러 메시지를 표시
+      setError(error.message || "회원가입에 실패했습니다. 입력 정보를 확인해주세요.");
     } finally {
       setIsSignupModalOpen(false);
     }
@@ -79,6 +102,11 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-6">
+              {error && (
+                <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-sm">
+                  {error} 
+                </div>
+              )}
               <div>
                 <Label htmlFor="email">이메일</Label>
                 <Input
@@ -86,7 +114,10 @@ export default function LoginPage() {
                   type="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) =>{ 
+                    setEmail(e.target.value);
+                    setError(null);
+                  }}
                   placeholder="이메일을 입력하세요"
                   className="mt-1"
                 />
@@ -99,7 +130,10 @@ export default function LoginPage() {
                   type="password"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) =>{ 
+                    setPassword(e.target.value);
+                    setError(null);
+                  }}
                   placeholder="비밀번호를 입력하세요"
                   className="mt-1"
                 />
