@@ -170,14 +170,7 @@ export default function DashboardPage() {
 
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-medium text-gray-900">최근 레쥬메</h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-gray-600 hover:text-gray-900"
-            >
-              모두 보기
-            </Button>
+            <h2 className="text-lg font-medium text-gray-900">레쥬메 목록</h2>
           </div>
 
           {loading ? (
