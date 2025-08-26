@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import {
@@ -18,12 +18,10 @@ import {
   TrendingUp,
   FileText,
   MessageSquare,
-  Map,
 } from "lucide-react";
-import { Resume, ResumeSession, ResumeItem } from "../types/resume";
+import { ResumeSession, ResumeItem } from "../types/resume";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { getResume } from "../redux/slices/resumeSlice";
-import { createRoadmap } from "@/redux/slices/roadmapSlice";
 
 export default function AnalysisPage() {
   const dispatch = useAppDispatch();

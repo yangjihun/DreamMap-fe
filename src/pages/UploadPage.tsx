@@ -116,7 +116,7 @@ const UploadPage: React.FC = () => {
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { loading, error } = useAppSelector((state) => state.resume);
+  const { loading } = useAppSelector((state) => state.resume);
 
   const totalChars = useMemo(
     () => sections.reduce((acc, s) => acc + s.text.length, 0),
