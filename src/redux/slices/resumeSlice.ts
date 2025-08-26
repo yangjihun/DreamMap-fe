@@ -18,7 +18,13 @@ export const fetchResumes = createAsyncThunk<
   try {
     const res = await api.get("/resume/all");
     console.log("HIHI", res.data.data);
-    return res.data.data;
+    // 이력서 정렬(즐겨찾기 우선, updateAt 최신순)
+    const sortedResumes = res.data.data.sort((a: Resume, b: Resume) => {
+      if (a.starred !== b.starred) return a.starred ? -1 : 1;
+      // updateAt 내림차순
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+    return sortedResumes;
   } catch (e: any) {
     return rejectWithValue(
       e.response?.data?.message ?? "이력서 목록 로드 실패"
@@ -144,9 +150,10 @@ export const toggleStar = createAsyncThunk<
   { id: string; starred: boolean },
   string,
   { rejectValue: string }
->("resume/toggleStarred", async (resumeId, { rejectWithValue }) => {
+>("resume/toggleStarred", async (resumeId, { dispatch,rejectWithValue }) => {
   try {
     const res = await api.put(`/resume/${resumeId}/star`);
+    dispatch(fetchResumes())
     return res.data.data;
   } catch (error: any) {
     return rejectWithValue(
