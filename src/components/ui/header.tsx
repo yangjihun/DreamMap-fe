@@ -9,7 +9,7 @@ import { Sparkles, Search, User, Settings, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "./avatar";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { logout } from "../../redux/slices/authSlice";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function Header() {
   const dispatch = useAppDispatch();
@@ -17,9 +17,11 @@ export default function Header() {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const location = useLocation();
   const isDashboardPage = location.pathname === "/dashboard";
+  const navigate = useNavigate()
 
   const handleLogout = () => {
     dispatch(logout());
+    navigate("/")
   };
   return (
     <header className="bg-white border-b border-gray-200">
