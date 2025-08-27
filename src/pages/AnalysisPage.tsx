@@ -25,6 +25,7 @@ import Header from "../components/ui/header";
 import {
   getResume,
   generateResumeWithReview,
+  hideMergeFeedbackBtn,
 } from "../redux/slices/resumeSlice";
 //import { createRoadmap } from "@/redux/slices/roadmapSlice";
 
@@ -116,6 +117,7 @@ export default function AnalysisPage() {
     await dispatch(generateResumeWithReview(id || ""));
     setIsGenerating(false);
     alert("피드백이 반영된 새로운 이력서가 생성되었습니다!");
+    dispatch(hideMergeFeedbackBtn());
   };
 
   const handleDownload = () => {
@@ -195,7 +197,7 @@ export default function AnalysisPage() {
 
         {/* 액션 버튼들 */}
         <div className="flex items-center gap-3 mb-8">
-          {isFeedbackMode && (
+          {isFeedbackMode ? (
             <Button
               onClick={handleMergeFeedback}
               disabled={isGenerating}
@@ -213,15 +215,16 @@ export default function AnalysisPage() {
                 </>
               )}
             </Button>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={handleDownload}
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              다운로드
+            </Button>
           )}
-          <Button
-            variant="outline"
-            onClick={handleDownload}
-            className="flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            다운로드
-          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

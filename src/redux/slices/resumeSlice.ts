@@ -168,10 +168,13 @@ export const createNewResumeWithSections = createAsyncThunk<
   Resume,
   {
     resumeTitle: string;
-    sections: Record<string, {
-      title: string;
-      items: Array<{ title: string; text: string }>;
-    }>;
+    sections: Record<
+      string,
+      {
+        title: string;
+        items: Array<{ title: string; text: string }>;
+      }
+    >;
   },
   { rejectValue: string }
 >("resume/createNewWithSections", async (payload, { rejectWithValue }) => {
@@ -261,6 +264,7 @@ const resumeSlice = createSlice({
   initialState,
   reducers: {
     showMergeFeedbackBtn: (state) => {
+      // 피드백 반영하여 새 이력서 생성 버튼 표시 함수
       state.isFeedbackMode = true;
     },
     hideMergeFeedbackBtn: (state) => {
@@ -448,6 +452,7 @@ const resumeSlice = createSlice({
   },
 });
 
-export const { showMergeFeedbackBtn, hideMergeFeedbackBtn } = resumeSlice.actions;
+export const { showMergeFeedbackBtn, hideMergeFeedbackBtn } =
+  resumeSlice.actions;
 
 export default resumeSlice.reducer;

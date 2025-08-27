@@ -19,7 +19,13 @@ import {
   Trash2,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { getResume, patchResume } from "@/redux/slices/resumeSlice";
+import {
+  getAiReview,
+  getResume,
+  hideMergeFeedbackBtn,
+  patchResume,
+  showMergeFeedbackBtn,
+} from "@/redux/slices/resumeSlice";
 import type {
   Resume as ResumeModel,
   ResumeSession as ResumeSessionModel,
@@ -190,6 +196,7 @@ export default function ResumeDetailPage() {
   const [sectionTitle, setSectionTitle] = useState("");
   const [sectionItemTitle, setSectionItemTitle] = useState("");
   const [sectionItemText, setSectionItemText] = useState("");
+  const [isReviewing, setIsReviewing] = useState(false);
 
   useEffect(() => {
     if (id) dispatch(getResume(id));
@@ -233,6 +240,16 @@ export default function ResumeDetailPage() {
       setIsEdit(false);
     } catch (e: any) {
       alert(typeof e === "string" ? e : e?.message ?? "저장 실패");
+    }
+  };
+
+  const handleNewReview = async () => {
+    setIsReviewing(true);
+    dispatch(showMergeFeedbackBtn());
+    if (id) {
+      await dispatch(getAiReview(id));
+      setIsReviewing(false);
+      navigate(`/analysis/${id}`);
     }
   };
 
@@ -610,15 +627,33 @@ export default function ResumeDetailPage() {
           <div className="flex justify-end gap-3 mt-8">
             <Button
               variant="outline"
-              onClick={() => navigate(`/analysis/${id}`)}
+              onClick={() => {
+                dispatch(hideMergeFeedbackBtn());
+                navigate(`/analysis/${id}`);
+              }}
               className="border-gray-200"
             >
-              분석 보러가기
+              이전 분석 보러가기
+            </Button>
+            <Button
+              variant="default"
+              onClick={handleNewReview}
+              className="border-gray-200"
+              disabled={isReviewing}
+            >
+              {isReviewing ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  분석 중...
+                </>
+              ) : (
+                "분석 새로받기"
+              )}
             </Button>
 
-            <Button onClick={() => navigate(`/roadmap/${id}`)}>
+            {/* <Button onClick={() => navigate(`/roadmap/${id}`)}>
               로드맵 보러가기
-            </Button>
+            </Button> */}
           </div>
         )}
       </div>
