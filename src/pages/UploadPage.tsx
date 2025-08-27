@@ -22,7 +22,7 @@ import {
   createNewResumeFromFile,
   createNewResumeWithSections,
   getAiReview,
-  setIsFeedbackMode,
+  setHasFeedbackResume,
 } from "@/redux/slices/resumeSlice";
 import FileUpload from "@/components/fileUpload";
 import TextUpload, {
@@ -136,7 +136,7 @@ const UploadPage: React.FC = () => {
         ).unwrap();
         setProcessStatus("reviewing");
         await dispatch(getAiReview(result.id));
-        dispatch(setIsFeedbackMode(true));
+        dispatch(setHasFeedbackResume(false));
         setProcessStatus("done");
         if (result?.id) navigate(`/analysis/${result.id}`);
       } else {

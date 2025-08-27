@@ -23,7 +23,7 @@ import {
   getAiReview,
   getResume,
   patchResume,
-  setIsFeedbackMode,
+  setHasFeedbackResume,
 } from "@/redux/slices/resumeSlice";
 import type {
   Resume as ResumeModel,
@@ -246,7 +246,7 @@ export default function ResumeDetailPage() {
     setIsReviewing(true);
     if (id) {
       await dispatch(getAiReview(id));
-      dispatch(setIsFeedbackMode(true));
+      dispatch(setHasFeedbackResume(false));
       setIsReviewing(false);
       navigate(`/analysis/${id}`);
     }
@@ -627,7 +627,6 @@ export default function ResumeDetailPage() {
             <Button
               variant="outline"
               onClick={() => {
-                dispatch(setIsFeedbackMode(false));
                 navigate(`/analysis/${id}`);
               }}
               className="border-gray-200"

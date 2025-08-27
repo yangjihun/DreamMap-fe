@@ -7,7 +7,9 @@ const initialState: ResumeState = {
   resume: null,
   loading: false,
   error: null,
-  isFeedbackMode: JSON.parse(localStorage.getItem("isFeedbackMode") || "false"),
+  hasFeedbackResume: JSON.parse(
+    localStorage.getItem("hasFeedbackResume") || "false"
+  ),
 };
 
 // 전체 목록
@@ -263,10 +265,10 @@ const resumeSlice = createSlice({
   name: "resume",
   initialState,
   reducers: {
-    setIsFeedbackMode: (state, action) => {
-      // 피드백 반영하여 새 이력서 생성 버튼 표시 함수
-      state.isFeedbackMode = action.payload;
-      localStorage.setItem("isFeedbackMode", JSON.stringify(action.payload));
+    setHasFeedbackResume: (state, action) => {
+      // 피드백 반영한 새 이력서 존재 여부 함수
+      state.hasFeedbackResume = action.payload;
+      localStorage.setItem("hasFeedbackResume", JSON.stringify(action.payload));
     },
   },
   extraReducers: (builder) => {
@@ -450,6 +452,6 @@ const resumeSlice = createSlice({
   },
 });
 
-export const { setIsFeedbackMode } = resumeSlice.actions;
+export const { setHasFeedbackResume } = resumeSlice.actions;
 
 export default resumeSlice.reducer;
