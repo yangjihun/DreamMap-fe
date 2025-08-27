@@ -18,7 +18,6 @@ export const fetchResumes = createAsyncThunk<
 >("resume/fetchResumes", async (_, { rejectWithValue }) => {
   try {
     const res = await api.get("/resume/all");
-    console.log("HIHI", res.data.data);
     // 이력서 정렬(즐겨찾기 우선, updateAt 최신순)
     const sortedResumes = res.data.data.sort((a: Resume, b: Resume) => {
       if (a.starred !== b.starred) return a.starred ? -1 : 1;
@@ -125,6 +124,7 @@ export const addItemToSession = createAsyncThunk<
     sessionKey: ResumeSession["key"];
     text: string;
     itemTitle?: string;
+    companyAddress?: string;
     startDate?: string;
     endDate?: string;
     review?: string;
@@ -136,10 +136,12 @@ export const addItemToSession = createAsyncThunk<
       text: payload.text,
       sessionKey: payload.sessionKey,
       itemTitle: payload.itemTitle || "새 항목",
+      companyAddress: payload.companyAddress,
       startDate: payload.startDate,
       endDate: payload.endDate,
       review: payload.review,
     });
+    console.log(payload);
     return res.data.data;
   } catch (error: any) {
     return rejectWithValue(error.response?.data?.message ?? "아이템 추가 실패");
