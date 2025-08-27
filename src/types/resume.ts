@@ -33,4 +33,5 @@ export interface ResumeState {
   resume: Resume | null;
   loading: boolean;
   error: string | null;
+  isFeedbackMode?: boolean;
 }

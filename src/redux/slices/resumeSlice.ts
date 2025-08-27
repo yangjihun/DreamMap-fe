@@ -7,6 +7,7 @@ const initialState: ResumeState = {
   resume: null,
   loading: false,
   error: null,
+  isFeedbackMode: false,
 };
 
 // 전체 목록
@@ -150,10 +151,10 @@ export const toggleStar = createAsyncThunk<
   { id: string; starred: boolean },
   string,
   { rejectValue: string }
->("resume/toggleStarred", async (resumeId, { dispatch,rejectWithValue }) => {
+>("resume/toggleStarred", async (resumeId, { dispatch, rejectWithValue }) => {
   try {
     const res = await api.put(`/resume/${resumeId}/star`);
-    dispatch(fetchResumes())
+    dispatch(fetchResumes());
     return res.data.data;
   } catch (error: any) {
     return rejectWithValue(
@@ -259,7 +260,14 @@ export const patchResume = createAsyncThunk<
 const resumeSlice = createSlice({
   name: "resume",
   initialState,
-  reducers: {},
+  reducers: {
+    showMergeFeedbackBtn: (state) => {
+      state.isFeedbackMode = true;
+    },
+    hideMergeFeedbackBtn: (state) => {
+      state.isFeedbackMode = false;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchResumes.pending, (state) => {
@@ -440,5 +448,7 @@ const resumeSlice = createSlice({
       });
   },
 });
+
+export const { showMergeFeedbackBtn, hideMergeFeedbackBtn } = resumeSlice.actions;
 
 export default resumeSlice.reducer;

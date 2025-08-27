@@ -34,7 +34,7 @@ export default function AnalysisPage() {
   const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState<ResumeItem | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const { resume } = useAppSelector((state) => state.resume);
+  const { resume, isFeedbackMode } = useAppSelector((state) => state.resume);
 
   // 백엔드에서 받아올 데이터 (임시로 하드코딩)
   /* const resume: Resume = {
@@ -172,7 +172,7 @@ export default function AnalysisPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate(`/resume/${id}`)}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -195,23 +195,25 @@ export default function AnalysisPage() {
 
         {/* 액션 버튼들 */}
         <div className="flex items-center gap-3 mb-8">
-          <Button
-            onClick={handleMergeFeedback}
-            disabled={isGenerating}
-            className="flex items-center gap-2"
-          >
-            {isGenerating ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                생성 중...
-              </>
-            ) : (
-              <>
-                <Star className="h-4 w-4" />
-                피드백 반영하여 새 이력서 생성
-              </>
-            )}
-          </Button>
+          {isFeedbackMode && (
+            <Button
+              onClick={handleMergeFeedback}
+              disabled={isGenerating}
+              className="flex items-center gap-2"
+            >
+              {isGenerating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  생성 중...
+                </>
+              ) : (
+                <>
+                  <Star className="h-4 w-4" />
+                  피드백 반영하여 새 이력서 생성
+                </>
+              )}
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={handleDownload}
@@ -310,12 +312,20 @@ export default function AnalysisPage() {
                 {selectedItem ? (
                   <div className="space-y-4">
                     <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <h4 className="font-medium text-blue-900 mb-2">
-                        {selectedItem.title || "선택된 항목"}
-                      </h4>
-                      <p className="text-blue-800 text-sm">
-                        {selectedItem.review}
-                      </p>
+                      {selectedItem.review ? (
+                        <>
+                          <h4 className="font-medium text-blue-900 mb-2">
+                            {selectedItem.title || "선택된 항목"}
+                          </h4>
+                          <p className="text-blue-800 text-sm">
+                            {selectedItem.review}
+                          </p>
+                        </>
+                      ) : (
+                        <h4 className="font-medium text-blue-900">
+                          선택된 항목에 대한 이전 AI 리뷰가 없습니다.
+                        </h4>
+                      )}
                     </div>
                     <div className="text-sm text-gray-600">
                       <p>
