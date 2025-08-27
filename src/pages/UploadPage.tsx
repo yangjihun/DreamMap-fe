@@ -53,7 +53,7 @@ const UploadPage: React.FC = () => {
     {
       id: crypto.randomUUID(),
       title: "",
-      items: [{ id: crypto.randomUUID(), title: "", text: "• " }],
+      items: [{ id: crypto.randomUUID(), title: "", text: "• ", companyAddress: "", startDate: "", endDate: "" }],
       key: "intro",
     },
   ]);

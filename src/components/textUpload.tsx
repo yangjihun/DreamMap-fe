@@ -2,10 +2,14 @@ import React, { useMemo, useCallback } from "react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Plus } from "lucide-react";
+const KEYWORDS = ['경력', '학력', '프로젝트', '수상', '인증', '활동', '경험'];
 
 export type DraftItem = {
   id: string;
   title: string;
+  companyAddress: string;
+  startDate: string;
+  endDate: string;
   text: string;
 };
 
@@ -51,6 +55,29 @@ const ItemBlock: React.FC<{
   onChange: (id: string, patch: Partial<DraftItem>) => void;
   onRemove: (id: string) => void;
 }> = ({ item, canRemove, onChange, onRemove }) => {
+  const showMeta = useMemo(() => {
+    const trimTitle = (item.title ?? "").trim();
+    if (!trimTitle) return false;
+    return KEYWORDS.some((k) => trimTitle.includes(k));
+  }, [item.title]);
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nextTitle = e.target.value;
+    onChange(item.id, { title: nextTitle });
+  };
+
+  const handleCompanyAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(item.id, { companyAddress: e.target.value });
+  }
+
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(item.id, { startDate: e.target.value });
+  };
+
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(item.id, { endDate: e.target.value });
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -63,7 +90,7 @@ const ItemBlock: React.FC<{
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     let value = e.target.value;
     if (value.length === 0) {
       value = "• ";
@@ -80,7 +107,7 @@ const ItemBlock: React.FC<{
         <input
           placeholder="아이템 제목"
           value={item.title}
-          onChange={(e) => onChange(item.id, { title: e.target.value })}
+          onChange={handleTitleChange}
           className="font-medium h-10 border-2 border-gray-200 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 px-3 rounded-md flex-1"
         />
         {canRemove && (
@@ -107,10 +134,44 @@ const ItemBlock: React.FC<{
           </Button>
         )}
       </div>
+      {showMeta && (
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 mb-3">
+          <div>
+            <h1>회사/기관명</h1>
+            <input
+              placeholder="회사/기관명"
+              value={item.companyAddress}
+              onChange={handleCompanyAddressChange}
+              className="h-10 border-2 border-gray-200 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 px-3 rounded-md"
+            />
+          </div>
+          <div>
+            <h1 className="text-gray-600">시작날짜</h1>
+            <input
+              type="month"
+              placeholder="시작날짜"
+              value={item.startDate}
+              onChange={handleStartDateChange}
+              className="h-10 border-2 border-gray-200 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 px-10 rounded-md"
+            />
+          </div>
+          <div>
+            <h1>종료날짜</h1>
+            <input
+              type="month"
+              placeholder="종료날짜"
+              value={item.endDate}
+              onChange={handleEndDateChange}
+              className="h-10 border-2 border-gray-200 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 px-10 rounded-md"
+            />
+          </div>
+        </div>
+      )}
       <textarea
         placeholder="내용을 입력하세요"
         value={item.text}
-        onChange={handleChange}
+        onChange={handleTextChange}
         onKeyDown={handleKeyDown}
         className="border-2 border-gray-200 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 min-h-[100px] w-full px-3 py-2 rounded-md resize-none"
       />
@@ -136,7 +197,6 @@ const SectionCard: React.FC<{
   onItemRemove: (sectionId: string, itemId: string) => void;
 }> = ({
   section,
-  index,
   canRemove,
   onChange,
   onRemove,
@@ -184,7 +244,7 @@ const SectionCard: React.FC<{
             variant="ghost"
             className="text-red-600 hover:text-red-700 hover:bg-red-50"
             onClick={() => onRemove(section.id)}
-            aria-label={`섹션 ${index + 1} 삭제`}
+            aria-label={`${section.title} 삭제`}
           >
             <svg
               className="h-4 w-4"
@@ -231,19 +291,6 @@ const SectionCard: React.FC<{
 };
 
 const TextUpload: React.FC<TextUploadProps> = ({ sections, onChange }) => {
-  const totalChars = useMemo(
-    () =>
-      sections.reduce(
-        (acc, s) =>
-          acc +
-          s.items.reduce((itemAcc, item) => {
-            const realContent = item.text.replace(/^•\s*/gm, "").trim();
-            return itemAcc + realContent.length;
-          }, 0),
-        0
-      ),
-    [sections]
-  );
 
   const addSection = useCallback(() => {
     const existingKeys = sections.map((s) => s.key);
@@ -253,7 +300,7 @@ const TextUpload: React.FC<TextUploadProps> = ({ sections, onChange }) => {
       {
         id: crypto.randomUUID(),
         title: "",
-        items: [{ id: crypto.randomUUID(), title: "", text: "• " }],
+        items: [{ id: crypto.randomUUID(), title: "", text: "• ", companyAddress: "", startDate: "", endDate: "" }],
         key,
       },
     ];
@@ -311,7 +358,7 @@ const TextUpload: React.FC<TextUploadProps> = ({ sections, onChange }) => {
               ...section,
               items: [
                 ...section.items,
-                { id: crypto.randomUUID(), title: "", text: "• " },
+                { id: crypto.randomUUID(), title: "", text: "• ", companyAddress: "", startDate: "", endDate: "" },
               ],
             }
           : section
@@ -338,10 +385,7 @@ const TextUpload: React.FC<TextUploadProps> = ({ sections, onChange }) => {
 
   return (
     <div className="mt-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <p className="text-base text-gray-700">
-          필요한 만큼 섹션을 추가해 입력하세요. 총 {totalChars}자
-        </p>
+      <div className="flex items-center justify-end">
         <Button variant="outline" onClick={addSection}>
           <Plus className="h-4 w-4 mr-2" /> 섹션 추가
         </Button>
