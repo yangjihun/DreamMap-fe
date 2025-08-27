@@ -7,7 +7,7 @@ const initialState: ResumeState = {
   resume: null,
   loading: false,
   error: null,
-  isFeedbackMode: false,
+  isFeedbackMode: JSON.parse(localStorage.getItem("isFeedbackMode") || "false"),
 };
 
 // 전체 목록
@@ -263,12 +263,10 @@ const resumeSlice = createSlice({
   name: "resume",
   initialState,
   reducers: {
-    showMergeFeedbackBtn: (state) => {
+    setIsFeedbackMode: (state, action) => {
       // 피드백 반영하여 새 이력서 생성 버튼 표시 함수
-      state.isFeedbackMode = true;
-    },
-    hideMergeFeedbackBtn: (state) => {
-      state.isFeedbackMode = false;
+      state.isFeedbackMode = action.payload;
+      localStorage.setItem("isFeedbackMode", JSON.stringify(action.payload));
     },
   },
   extraReducers: (builder) => {
@@ -452,7 +450,6 @@ const resumeSlice = createSlice({
   },
 });
 
-export const { showMergeFeedbackBtn, hideMergeFeedbackBtn } =
-  resumeSlice.actions;
+export const { setIsFeedbackMode } = resumeSlice.actions;
 
 export default resumeSlice.reducer;

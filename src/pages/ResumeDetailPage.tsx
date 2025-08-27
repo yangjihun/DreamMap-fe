@@ -22,9 +22,8 @@ import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
   getAiReview,
   getResume,
-  hideMergeFeedbackBtn,
   patchResume,
-  showMergeFeedbackBtn,
+  setIsFeedbackMode,
 } from "@/redux/slices/resumeSlice";
 import type {
   Resume as ResumeModel,
@@ -245,9 +244,9 @@ export default function ResumeDetailPage() {
 
   const handleNewReview = async () => {
     setIsReviewing(true);
-    dispatch(showMergeFeedbackBtn());
     if (id) {
       await dispatch(getAiReview(id));
+      dispatch(setIsFeedbackMode(true));
       setIsReviewing(false);
       navigate(`/analysis/${id}`);
     }
@@ -628,7 +627,7 @@ export default function ResumeDetailPage() {
             <Button
               variant="outline"
               onClick={() => {
-                dispatch(hideMergeFeedbackBtn());
+                dispatch(setIsFeedbackMode(false));
                 navigate(`/analysis/${id}`);
               }}
               className="border-gray-200"

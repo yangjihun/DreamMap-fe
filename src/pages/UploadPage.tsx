@@ -1,6 +1,11 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { Button } from "../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import {
   FileText,
@@ -13,9 +18,17 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import Header from "@/components/ui/header";
-import { createNewResumeFromFile, createNewResumeWithSections, getAiReview } from "@/redux/slices/resumeSlice";
+import {
+  createNewResumeFromFile,
+  createNewResumeWithSections,
+  getAiReview,
+  setIsFeedbackMode,
+} from "@/redux/slices/resumeSlice";
 import FileUpload from "@/components/fileUpload";
-import TextUpload, { type DraftSection, hasRealContent } from "@/components/textUpload";
+import TextUpload, {
+  type DraftSection,
+  hasRealContent,
+} from "@/components/textUpload";
 type UploadMethod = "file" | "text";
 type ProcessStatus = "idle" | "uploading" | "reviewing" | "done" | "error";
 
@@ -37,19 +50,17 @@ const UploadPage: React.FC = () => {
   const [resumeTitle, setResumeTitle] = useState("");
   const [processStatus, setProcessStatus] = useState<ProcessStatus>("idle");
   const [sections, setSections] = useState<DraftSection[]>([
-    { 
-      id: crypto.randomUUID(), 
-      title: "", 
+    {
+      id: crypto.randomUUID(),
+      title: "",
       items: [{ id: crypto.randomUUID(), title: "", text: "• " }],
-      key: "intro" 
+      key: "intro",
     },
   ]);
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector((state) => state.resume);
-
-
 
   const handleFileSelect = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,11 +74,16 @@ const UploadPage: React.FC = () => {
     if (loading) return true;
     if (!resumeTitle.trim()) return true;
     if (uploadMethod === "text") {
-      return !sections.every((s) => 
-        s.title.trim() && 
-        s.items.length > 0 && 
-        s.items.every((item) => hasRealContent(item.text) && item.title.trim())
-      ) || sections.length === 0;
+      return (
+        !sections.every(
+          (s) =>
+            s.title.trim() &&
+            s.items.length > 0 &&
+            s.items.every(
+              (item) => hasRealContent(item.text) && item.title.trim()
+            )
+        ) || sections.length === 0
+      );
     }
     return !selectedFile;
   }, [loading, resumeTitle, uploadMethod, sections, selectedFile]);
@@ -81,8 +97,13 @@ const UploadPage: React.FC = () => {
 
       setProcessStatus("uploading");
       if (uploadMethod === "text") {
-        const validSections = sections.filter((s) => 
-          s.title.trim().length > 0 && s.items.some((item) => hasRealContent(item.text) && item.title.trim().length > 0)
+        const validSections = sections.filter(
+          (s) =>
+            s.title.trim().length > 0 &&
+            s.items.some(
+              (item) =>
+                hasRealContent(item.text) && item.title.trim().length > 0
+            )
         );
         if (validSections.length === 0) {
           window.alert("적어도 하나의 섹션에 제목과 내용을 입력해주세요.");
@@ -100,7 +121,7 @@ const UploadPage: React.FC = () => {
               title: item.title.trim() || "새 항목",
               text: item.text.trim(),
             }));
-          
+
           payloadSections[key] = {
             title: s.title.trim(),
             items: validItems,
@@ -115,6 +136,7 @@ const UploadPage: React.FC = () => {
         ).unwrap();
         setProcessStatus("reviewing");
         await dispatch(getAiReview(result.id));
+        dispatch(setIsFeedbackMode(true));
         setProcessStatus("done");
         if (result?.id) navigate(`/analysis/${result.id}`);
       } else {
@@ -179,8 +201,7 @@ const UploadPage: React.FC = () => {
           </CardContent>
           <CardHeader>
             <CardTitle className="flex items-center">
-              업로드 방법
-              선택
+              업로드 방법 선택
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -210,19 +231,16 @@ const UploadPage: React.FC = () => {
                 <FileText className="h-5 w-5 mr-2" /> 텍스트 입력
               </button>
             </div>
-              {uploadMethod === "file" && (
-                <FileUpload 
-                  selectedFile={selectedFile}
-                  onFileSelect={handleFileSelect}
-                  onFileRemove={() => setSelectedFile(null)}
-                />
-              )}
+            {uploadMethod === "file" && (
+              <FileUpload
+                selectedFile={selectedFile}
+                onFileSelect={handleFileSelect}
+                onFileRemove={() => setSelectedFile(null)}
+              />
+            )}
 
             {uploadMethod === "text" && (
-              <TextUpload
-                sections={sections}
-                onChange={setSections}
-              />
+              <TextUpload sections={sections} onChange={setSections} />
             )}
           </CardContent>
         </Card>
