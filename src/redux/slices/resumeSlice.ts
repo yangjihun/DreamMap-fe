@@ -167,11 +167,10 @@ export const createNewResumeWithSections = createAsyncThunk<
   Resume,
   {
     resumeTitle: string;
-    sections: {
-      intro?: { text: string; title?: string };
-      body?: { text: string; title?: string };
-      closing?: { text: string; title?: string };
-    };
+    sections: Record<string, {
+      title: string;
+      items: Array<{ title: string; text: string }>;
+    }>;
   },
   { rejectValue: string }
 >("resume/createNewWithSections", async (payload, { rejectWithValue }) => {

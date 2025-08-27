@@ -1,45 +1,23 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { Button } from "../components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { Textarea } from "../components/ui/textarea";
 import {
-  Upload,
   FileText,
   Sparkles,
   Loader2,
   AlertCircle,
   File as FileIcon,
-  X,
-  Plus,
-  Trash2,
   CheckCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import Header from "../components/ui/header";
-import {
-  createNewResumeFromFile,
-  createNewResumeWithSections,
-  getAiReview,
-} from "../redux/slices/resumeSlice";
-
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import Header from "@/components/ui/header";
+import { createNewResumeFromFile, createNewResumeWithSections, getAiReview } from "@/redux/slices/resumeSlice";
+import FileUpload from "@/components/fileUpload";
+import TextUpload, { type DraftSection, hasRealContent } from "@/components/textUpload";
 type UploadMethod = "file" | "text";
 type ProcessStatus = "idle" | "uploading" | "reviewing" | "done" | "error";
-
-export type DraftSection = {
-  id: string;
-  title: string;
-  itemTitle: string;
-  text: string;
-  key: string;
-};
 
 function slugify(raw: string) {
   const base = (raw ?? "")
@@ -53,104 +31,25 @@ function slugify(raw: string) {
   return /^[a-z]/.test(safe) ? safe : `sec-${safe}`;
 }
 
-function uniqueKey(baseTitle: string, existing: string[]) {
-  const base = slugify(baseTitle);
-  let k = base;
-  let i = 1;
-  while (existing.includes(k)) k = `${base}-${i++}`;
-  return k;
-}
-
-const SectionCard: React.FC<{
-  section: DraftSection;
-  index: number;
-  canRemove: boolean;
-  onChange: (id: string, patch: Partial<DraftSection>) => void;
-  onRemove: (id: string) => void;
-}> = ({ section, index, canRemove, onChange, onRemove }) => {
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const { selectionStart, value } = e.currentTarget;
-      const newValue =
-        value.substring(0, selectionStart) +
-        "\n• " +
-        value.substring(selectionStart);
-      onChange(section.id, { text: newValue });
-    }
-  };
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    let value = e.target.value;
-    if (value.length === 1 && value !== "•") {
-      value = "• " + value;
-    }
-    if (value.length === 0) {
-      value = "• ";
-    }
-    onChange(section.id, { text: value });
-  };
-  return (
-    <div className="border border-gray-200 rounded-lg p-4">
-      <div className="flex items-center justify-between mb-3">
-        <Label className="text-base font-medium text-gray-700">
-          <Input
-            placeholder="섹션 제목"
-            value={section.title}
-            onChange={(e) => onChange(section.id, { title: e.target.value })}
-            className="mb-2 placeholder:text-gray-400"
-          />
-        </Label>
-        {canRemove && (
-          <Button
-            variant="ghost"
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            onClick={() => onRemove(section.id)}
-            aria-label={`섹션 ${index + 1} 삭제`}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-
-      <div className="grid gap-3">
-        <Input
-            placeholder="아이템 제목"
-            value={section.itemTitle}
-            onChange={(e) => onChange(section.id, { itemTitle: e.target.value })}
-            className="mb-2 placeholder:text-gray-400"
-          />
-        <Textarea
-          placeholder="이 아이템에 들어갈 내용을 입력하세요..."
-          value={section.text}
-          onChange={(e) => onChange(section.id, { text: e.target.value })}
-          rows={index === 0 ? 4 : 5}
-          className="border-gray-300 placeholder:text-gray-400"
-        />
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <span>문자수: {section.text.length}자</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const UploadPage: React.FC = () => {
   const [uploadMethod, setUploadMethod] = useState<UploadMethod>("file");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [resumeTitle, setResumeTitle] = useState("");
   const [processStatus, setProcessStatus] = useState<ProcessStatus>("idle");
   const [sections, setSections] = useState<DraftSection[]>([
-    { id: crypto.randomUUID(), title: "", itemTitle: "", text: "", key: "intro" },
+    { 
+      id: crypto.randomUUID(), 
+      title: "", 
+      items: [{ id: crypto.randomUUID(), title: "", text: "• " }],
+      key: "intro" 
+    },
   ]);
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { loading } = useAppSelector((state) => state.resume);
 
-  const totalChars = useMemo(
-    () => sections.reduce((acc, s) => acc + s.text.length, 0),
-    [sections]
-  );
+
 
   const handleFileSelect = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -160,44 +59,17 @@ const UploadPage: React.FC = () => {
     []
   );
 
-  const addSection = useCallback(() => {
-    const existingKeys = sections.map((s) => s.key);
-    const key = uniqueKey(`section-${sections.length + 1}`, existingKeys);
-    setSections((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), title: "", itemTitle: "", text: "", key },
-    ]);
-  }, [sections]);
-
-  const removeSection = useCallback((id: string) => {
-    setSections((prev) => prev.filter((s) => s.id !== id));
-  }, []);
-
-  const updateSection = useCallback(
-    (id: string, patch: Partial<DraftSection>) => {
-      setSections((prev) =>
-        prev.map((s) => {
-          if (s.id !== id) return s;
-          const next: DraftSection = { ...s, ...patch };
-          if (typeof patch.title === "string") {
-            const existingKeys = prev
-              .filter((x) => x.id !== id)
-              .map((x) => x.key);
-            next.key = uniqueKey(patch.title || "section", existingKeys);
-          }
-          return next;
-        })
-      );
-    },
-    []
-  );
-
   const isAnalyzeDisabled = useMemo(() => {
     if (loading) return true;
     if (!resumeTitle.trim()) return true;
-    return uploadMethod === "text"
-      ? sections.every((s) => !s.text.trim())
-      : !selectedFile;
+    if (uploadMethod === "text") {
+      return !sections.every((s) => 
+        s.title.trim() && 
+        s.items.length > 0 && 
+        s.items.every((item) => hasRealContent(item.text) && item.title.trim())
+      ) || sections.length === 0;
+    }
+    return !selectedFile;
   }, [loading, resumeTitle, uploadMethod, sections, selectedFile]);
 
   const handleAnalyze = useCallback(async () => {
@@ -209,20 +81,29 @@ const UploadPage: React.FC = () => {
 
       setProcessStatus("uploading");
       if (uploadMethod === "text") {
-        const filled = sections.filter((s) => s.text.trim().length > 0);
-        if (filled.length === 0) {
-          window.alert("적어도 하나의 섹션에 내용을 입력해주세요.");
+        const validSections = sections.filter((s) => 
+          s.title.trim().length > 0 && s.items.some((item) => hasRealContent(item.text) && item.title.trim().length > 0)
+        );
+        if (validSections.length === 0) {
+          window.alert("적어도 하나의 섹션에 제목과 내용을 입력해주세요.");
           return;
         }
         const payloadSections: Record<
           string,
-          { text: string; title?: string }
+          { title: string; items: Array<{ title: string; text: string }> }
         > = {};
-        filled.forEach((s) => {
+        validSections.forEach((s) => {
           const key = s.key || slugify(s.title || "section");
+          const validItems = s.items
+            .filter((item) => hasRealContent(item.text))
+            .map((item) => ({
+              title: item.title.trim() || "새 항목",
+              text: item.text.trim(),
+            }));
+          
           payloadSections[key] = {
-            text: s.text.trim(),
-            title: s.title.trim() || undefined,
+            title: s.title.trim(),
+            items: validItems,
           };
         });
 
@@ -279,8 +160,8 @@ const UploadPage: React.FC = () => {
 
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Sparkles className="h-5 w-5 mr-2 text-purple-600" /> 이력서 제목
+            <CardTitle className="flex items-center text-xl">
+              이력서 제목
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -294,17 +175,11 @@ const UploadPage: React.FC = () => {
                 className="border-2 border-gray-200 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                 required
               />
-              <p className="text-sm text-gray-500 mt-2">
-                새 이력서의 제목을 입력해주세요
-              </p>
             </div>
           </CardContent>
-        </Card>
-
-        <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Sparkles className="h-5 w-5 mr-2 text-purple-600" /> 업로드 방법
+              업로드 방법
               선택
             </CardTitle>
           </CardHeader>
@@ -335,85 +210,19 @@ const UploadPage: React.FC = () => {
                 <FileText className="h-5 w-5 mr-2" /> 텍스트 입력
               </button>
             </div>
-
-            {uploadMethod === "file" && (
-              <div className="mt-6 space-y-6">
-                <div>
-                  <Label className="text-base font-medium text-gray-700 mb-3 block">
-                    이력서 파일 선택
-                  </Label>
-                  <div className="mt-2">
-                    {selectedFile ? (
-                      <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <FileIcon className="h-5 w-5 text-blue-600" />
-                          <span className="text-sm font-medium text-blue-900">
-                            {selectedFile.name}
-                          </span>
-                          <span className="text-xs text-blue-600">
-                            ({(selectedFile.size / 1024).toFixed(1)} KB)
-                          </span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedFile(null)}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex justify-center px-6 pt-8 pb-8 border-2 border-gray-300 border-dashed rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200">
-                        <div className="space-y-4 text-center">
-                          <Upload className="mx-auto h-16 w-16 text-gray-400" />
-                          <div className="space-y-2">
-                            <Label className="relative cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 inline-block">
-                              <span className="flex items-center">
-                                <FileIcon className="h-4 w-4 mr-2" /> 파일
-                                업로드
-                              </span>
-                              <Input
-                                type="file"
-                                className="sr-only"
-                                accept=".pdf"
-                                onChange={handleFileSelect}
-                              />
-                            </Label>
-                          </div>
-                          <p className="text-xs text-gray-500">
-                            PDF 파일만 지원합니다
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
+              {uploadMethod === "file" && (
+                <FileUpload 
+                  selectedFile={selectedFile}
+                  onFileSelect={handleFileSelect}
+                  onFileRemove={() => setSelectedFile(null)}
+                />
+              )}
 
             {uploadMethod === "text" && (
-              <div className="mt-6 space-y-6">
-                <div className="flex items-center justify-between">
-                  <p className="text-base text-gray-700">
-                    필요한 만큼 섹션을 추가해 입력하세요. 총 {totalChars}자
-                  </p>
-                  <Button variant="outline" onClick={addSection}>
-                    <Plus className="h-4 w-4 mr-2" /> 섹션 추가
-                  </Button>
-                </div>
-
-                {sections.map((s, idx) => (
-                  <SectionCard
-                    key={s.id}
-                    section={s}
-                    index={idx}
-                    canRemove={sections.length > 1}
-                    onChange={updateSection}
-                    onRemove={removeSection}
-                  />
-                ))}
-              </div>
+              <TextUpload
+                sections={sections}
+                onChange={setSections}
+              />
             )}
           </CardContent>
         </Card>
