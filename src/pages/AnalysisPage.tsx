@@ -265,25 +265,28 @@ export default function AnalysisPage() {
                             (item: ResumeItem, itemIndex: number) => (
                               <div
                                 key={itemIndex}
-                                className={`p-4 border rounded-lg cursor-pointer transition-all hover:border-blue-300 hover:shadow-sm ${
+                                className={`p-5 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
                                   selectedItem === item
-                                    ? "border-blue-500 bg-blue-50"
-                                    : "border-gray-200"
+                                    ? "border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg"
+                                    : "border-gray-200 bg-white hover:border-blue-300"
                                 }`}
                                 onClick={() => setSelectedItem(item)}
                               >
                                 {item.title && (
-                                  <h4 className="font-medium text-gray-900 mb-2">
+                                  <h4 className="font-semibold text-gray-900 mb-3 text-lg">
                                     {item.title}
                                   </h4>
                                 )}
-                                <p className="text-gray-700 mb-2">
+                                <p className="text-gray-700 mb-3 leading-relaxed whitespace-pre-wrap">
                                   {item.text}
                                 </p>
                                 {(item.startDate || item.endDate) && (
-                                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                                    <Clock className="h-4 w-4" />
-                                    {item.startDate} - {item.endDate || "현재"}
+                                  <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
+                                    <Clock className="h-4 w-4 text-gray-400" />
+                                    <span className="font-medium">
+                                      {item.startDate} -{" "}
+                                      {item.endDate || "현재"}
+                                    </span>
                                   </div>
                                 )}
                               </div>
@@ -308,40 +311,56 @@ export default function AnalysisPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
-                  AI 리뷰
+                  선택된 항목 리뷰
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {selectedItem ? (
                   <div className="space-y-4">
-                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <h4 className="font-semibold text-green-900 text-lg">
+                          {selectedItem.title || "선택된 항목"}
+                        </h4>
+                      </div>
                       {selectedItem.review ? (
-                        <>
-                          <h4 className="font-medium text-blue-900 mb-2">
-                            {selectedItem.title || "선택된 항목"}
-                          </h4>
-                          <p className="text-blue-800 text-sm">
+                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-green-100">
+                          <p className="text-green-800 text-sm leading-relaxed whitespace-pre-wrap">
                             {selectedItem.review}
                           </p>
-                        </>
+                        </div>
                       ) : (
-                        <h4 className="font-medium text-blue-900">
-                          선택된 항목에 대한 이전 AI 리뷰가 없습니다.
-                        </h4>
+                        <div className="bg-white/60 rounded-lg p-4 border border-green-100">
+                          <p className="text-green-700 text-sm font-medium">
+                            선택된 항목에 대한 이전 AI 리뷰가 없습니다.
+                          </p>
+                        </div>
                       )}
                     </div>
-                    <div className="text-sm text-gray-600">
-                      <p>
-                        💡 <strong>팁:</strong> 이 항목을 클릭하여 더 자세한
-                        피드백을 확인하세요.
-                      </p>
+                    <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                      <div className="flex items-start gap-3">
+                        <div className="text-blue-600 text-lg">💡</div>
+                        <div className="text-sm text-blue-800">
+                          <p className="font-medium mb-1">팁:</p>
+                          <p>
+                            이 항목을 클릭하여 더 자세한 피드백을 확인하세요.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <MessageSquare className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p>왼쪽의 항목을 클릭하여</p>
-                    <p>AI 리뷰를 확인하세요</p>
+                  <div className="text-center py-12 text-gray-500">
+                    <div className="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                      <MessageSquare className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="font-medium text-gray-700 mb-2">
+                      항목을 선택해주세요
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      왼쪽의 항목을 클릭하여 AI 리뷰를 확인하세요
+                    </p>
                   </div>
                 )}
               </CardContent>
@@ -349,26 +368,22 @@ export default function AnalysisPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>전체 분석 요약</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  전체 분석 요약
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">전체 점수</span>
-                    <Badge className="bg-green-100 text-green-800">
-                      {resume?.score}/100
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">총 글자 수</span>
-                    <span className="font-medium">{resume?.totalCount}자</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">섹션 수</span>
-                    <span className="font-medium">
-                      {resume?.sessions?.length}개
-                    </span>
-                  </div>
+                  {resume && (
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6">
+                      <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4 border border-purple-100">
+                        <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                          {resume.review || "아직 분석된 리뷰가 없습니다."}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
