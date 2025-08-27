@@ -11,13 +11,13 @@ import { Badge } from "../components/ui/badge";
 import { Separator } from "../components/ui/separator";
 import {
   ArrowLeft,
-  Download,
   Star,
   CheckCircle,
   Clock,
   TrendingUp,
   FileText,
   MessageSquare,
+  Eye,
 } from "lucide-react";
 import { ResumeSession, ResumeItem } from "../types/resume";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
@@ -25,8 +25,9 @@ import Header from "../components/ui/header";
 import {
   getResume,
   generateResumeWithReview,
-  setIsFeedbackMode,
+  setHasFeedbackResume,
 } from "../redux/slices/resumeSlice";
+import { PDFPreviewModal } from "@/components/resume-to-pdf/PDFPreviewModal";
 //import { createRoadmap } from "@/redux/slices/roadmapSlice";
 
 export default function AnalysisPage() {
@@ -35,7 +36,8 @@ export default function AnalysisPage() {
   const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState<ResumeItem | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const { resume, isFeedbackMode } = useAppSelector((state) => state.resume);
+  const [showPDFPreview, setShowPDFPreview] = useState(false);
+  const { resume, hasFeedbackResume } = useAppSelector((state) => state.resume);
 
   // 백엔드에서 받아올 데이터 (임시로 하드코딩)
   /* const resume: Resume = {
@@ -117,12 +119,7 @@ export default function AnalysisPage() {
     await dispatch(generateResumeWithReview(id || ""));
     setIsGenerating(false);
     alert("피드백이 반영된 새로운 이력서가 생성되었습니다!");
-    dispatch(setIsFeedbackMode(false));
-  };
-
-  const handleDownload = () => {
-    // 실제로는 백엔드에서 PDF 생성 후 다운로드
-    alert("이력서 다운로드가 시작됩니다.");
+    dispatch(setHasFeedbackResume(true));
   };
 
   useEffect(() => {
@@ -130,6 +127,15 @@ export default function AnalysisPage() {
       dispatch(getResume(id));
     }
   }, [id]);
+
+  useEffect(() => {
+    if (
+      resume?.sessions.map((session) =>
+        session.items.map((item) => !!item.oldText)
+      )
+    )
+      dispatch(setHasFeedbackResume(true));
+  }, []);
 
   const getSessionIcon = (key: string) => {
     switch (key) {
@@ -197,32 +203,31 @@ export default function AnalysisPage() {
 
         {/* 액션 버튼들 */}
         <div className="flex items-center gap-3 mb-8">
-          {isFeedbackMode ? (
-            <Button
-              onClick={handleMergeFeedback}
-              disabled={isGenerating}
-              className="flex items-center gap-2"
-            >
-              {isGenerating ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  생성 중...
-                </>
-              ) : (
-                <>
-                  <Star className="h-4 w-4" />
-                  피드백 반영하여 새 이력서 생성
-                </>
-              )}
-            </Button>
-          ) : (
+          <Button
+            onClick={handleMergeFeedback}
+            disabled={isGenerating}
+            className="flex items-center gap-2"
+          >
+            {isGenerating ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                생성 중...
+              </>
+            ) : (
+              <>
+                <Star className="h-4 w-4" />
+                피드백 반영하여 새 이력서 생성
+              </>
+            )}
+          </Button>
+          {hasFeedbackResume && (
             <Button
               variant="outline"
-              onClick={handleDownload}
-              className="flex items-center gap-2"
+              onClick={() => setShowPDFPreview(true)}
+              className="mr-3"
             >
-              <Download className="h-4 w-4" />
-              다운로드
+              <Eye className="w-4 h-4 mr-1" />
+              새로운 이력서 미리보기
             </Button>
           )}
         </div>
@@ -390,7 +395,12 @@ export default function AnalysisPage() {
           </div>
         </div>
       </div>
-
+      {showPDFPreview && resume && (
+        <PDFPreviewModal
+          closeModal={() => setShowPDFPreview(false)}
+          resume={resume}
+        />
+      )}
       {/* 하단 고정된 다음 단계 카드 */}
       {/*<div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
         <div className="container mx-auto px-4 py-4">
