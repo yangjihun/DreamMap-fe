@@ -22,10 +22,7 @@ interface TextUploadProps {
 }
 
 export function hasRealContent(text: string): boolean {
-  return text
-    .replace(/^•\s*/gm, '')
-    .trim()
-    .length > 0;
+  return text.replace(/^•\s*/gm, "").trim().length > 0;
 }
 
 function slugify(raw: string) {
@@ -70,11 +67,10 @@ const ItemBlock: React.FC<{
     let value = e.target.value;
     if (value.length === 0) {
       value = "• ";
-    }
-    else if (value.length === 1 && value !== "•") {
+    } else if (value.length === 1 && value !== "•") {
       value = "• " + value;
     }
-    
+
     onChange(item.id, { text: value });
   };
 
@@ -95,8 +91,18 @@ const ItemBlock: React.FC<{
             className="text-red-600 hover:text-red-700 hover:bg-red-50"
             aria-label="항목 삭제"
           >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
             </svg>
           </Button>
         )}
@@ -109,7 +115,7 @@ const ItemBlock: React.FC<{
         className="border-2 border-gray-200 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 min-h-[100px] w-full px-3 py-2 rounded-md resize-none"
       />
       <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
-        <span>문자수: {item.text.replace(/^•\s*/gm, '').trim().length}자</span>
+        <span>문자수: {item.text.replace(/^•\s*/gm, "").trim().length}자</span>
       </div>
     </div>
   );
@@ -121,23 +127,36 @@ const SectionCard: React.FC<{
   canRemove: boolean;
   onChange: (id: string, patch: Partial<DraftSection>) => void;
   onRemove: (id: string) => void;
-  onItemChange: (sectionId: string, itemId: string, patch: Partial<DraftItem>) => void;
+  onItemChange: (
+    sectionId: string,
+    itemId: string,
+    patch: Partial<DraftItem>
+  ) => void;
   onItemAdd: (sectionId: string) => void;
   onItemRemove: (sectionId: string, itemId: string) => void;
-}> = ({ section, index, canRemove, onChange, onRemove, onItemChange, onItemAdd, onItemRemove }) => {
-
+}> = ({
+  section,
+  index,
+  canRemove,
+  onChange,
+  onRemove,
+  onItemChange,
+  onItemAdd,
+  onItemRemove,
+}) => {
   const totalChars = useMemo(
-    () => section.items.reduce((acc, item) => {
-      const realContent = item.text.replace(/^•\s*/gm, '').trim();
-      return acc + realContent.length;
-    }, 0),
+    () =>
+      section.items.reduce((acc, item) => {
+        const realContent = item.text.replace(/^•\s*/gm, "").trim();
+        return acc + realContent.length;
+      }, 0),
     [section.items]
   );
 
   const handleAddItem = () => {
     onItemAdd(section.id);
   };
-  
+
   return (
     <div className="border border-gray-200 rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
@@ -152,7 +171,10 @@ const SectionCard: React.FC<{
             <Badge variant="secondary" className="rounded-full text-xs">
               {section.items.length}개 항목
             </Badge>
-            <Badge variant="outline" className="rounded-full border-gray-200 text-xs">
+            <Badge
+              variant="outline"
+              className="rounded-full border-gray-200 text-xs"
+            >
               {totalChars.toLocaleString()}자
             </Badge>
           </div>
@@ -164,8 +186,18 @@ const SectionCard: React.FC<{
             onClick={() => onRemove(section.id)}
             aria-label={`섹션 ${index + 1} 삭제`}
           >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
             </svg>
           </Button>
         )}
@@ -178,7 +210,9 @@ const SectionCard: React.FC<{
               key={item.id}
               item={item}
               canRemove={section.items.length > 1}
-              onChange={(itemId, patch) => onItemChange(section.id, itemId, patch)}
+              onChange={(itemId, patch) =>
+                onItemChange(section.id, itemId, patch)
+              }
               onRemove={(itemId) => onItemRemove(section.id, itemId)}
             />
           ))}
@@ -198,10 +232,16 @@ const SectionCard: React.FC<{
 
 const TextUpload: React.FC<TextUploadProps> = ({ sections, onChange }) => {
   const totalChars = useMemo(
-    () => sections.reduce((acc, s) => acc + s.items.reduce((itemAcc, item) => {
-      const realContent = item.text.replace(/^•\s*/gm, '').trim();
-      return itemAcc + realContent.length;
-    }, 0), 0),
+    () =>
+      sections.reduce(
+        (acc, s) =>
+          acc +
+          s.items.reduce((itemAcc, item) => {
+            const realContent = item.text.replace(/^•\s*/gm, "").trim();
+            return itemAcc + realContent.length;
+          }, 0),
+        0
+      ),
     [sections]
   );
 
@@ -210,76 +250,91 @@ const TextUpload: React.FC<TextUploadProps> = ({ sections, onChange }) => {
     const key = uniqueKey(`section-${sections.length + 1}`, existingKeys);
     const newSections = [
       ...sections,
-      { 
-        id: crypto.randomUUID(), 
-        title: "", 
+      {
+        id: crypto.randomUUID(),
+        title: "",
         items: [{ id: crypto.randomUUID(), title: "", text: "• " }],
-        key 
+        key,
       },
     ];
     onChange(newSections);
   }, [sections, onChange]);
 
-  const removeSection = useCallback((id: string) => {
-    const newSections = sections.filter((s) => s.id !== id);
-    onChange(newSections);
-  }, [sections, onChange]);
+  const removeSection = useCallback(
+    (id: string) => {
+      const newSections = sections.filter((s) => s.id !== id);
+      onChange(newSections);
+    },
+    [sections, onChange]
+  );
 
-  const updateSection = useCallback((id: string, patch: Partial<DraftSection>) => {
-    const newSections = sections.map((s) => {
-      if (s.id !== id) return s;
-      const next: DraftSection = { ...s, ...patch };
-      if (typeof patch.title === "string") {
-        const existingKeys = sections
-          .filter((x) => x.id !== id)
-          .map((x) => x.key);
-        next.key = uniqueKey(patch.title || "section", existingKeys);
-      }
-      return next;
-    });
-    onChange(newSections);
-  }, [sections, onChange]);
+  const updateSection = useCallback(
+    (id: string, patch: Partial<DraftSection>) => {
+      const newSections = sections.map((s) => {
+        if (s.id !== id) return s;
+        const next: DraftSection = { ...s, ...patch };
+        if (typeof patch.title === "string") {
+          const existingKeys = sections
+            .filter((x) => x.id !== id)
+            .map((x) => x.key);
+          next.key = uniqueKey(patch.title || "section", existingKeys);
+        }
+        return next;
+      });
+      onChange(newSections);
+    },
+    [sections, onChange]
+  );
 
-  const updateItem = useCallback((sectionId: string, itemId: string, patch: Partial<DraftItem>) => {
-    const newSections = sections.map((section) =>
-      section.id === sectionId
-        ? {
-            ...section,
-            items: section.items.map((item) =>
-              item.id === itemId ? { ...item, ...patch } : item
-            ),
-          }
-        : section
-    );
-    onChange(newSections);
-  }, [sections, onChange]);
+  const updateItem = useCallback(
+    (sectionId: string, itemId: string, patch: Partial<DraftItem>) => {
+      const newSections = sections.map((section) =>
+        section.id === sectionId
+          ? {
+              ...section,
+              items: section.items.map((item) =>
+                item.id === itemId ? { ...item, ...patch } : item
+              ),
+            }
+          : section
+      );
+      onChange(newSections);
+    },
+    [sections, onChange]
+  );
 
-  const addItem = useCallback((sectionId: string) => {
-    const newSections = sections.map((section) =>
-      section.id === sectionId
-        ? {
-            ...section,
-            items: [
-              ...section.items,
-              { id: crypto.randomUUID(), title: "", text: "• " },
-            ],
-          }
-        : section
-    );
-    onChange(newSections);
-  }, [sections, onChange]);
+  const addItem = useCallback(
+    (sectionId: string) => {
+      const newSections = sections.map((section) =>
+        section.id === sectionId
+          ? {
+              ...section,
+              items: [
+                ...section.items,
+                { id: crypto.randomUUID(), title: "", text: "• " },
+              ],
+            }
+          : section
+      );
+      onChange(newSections);
+    },
+    [sections, onChange]
+  );
 
-  const removeItem = useCallback((sectionId: string, itemId: string) => {
-    const newSections = sections.map((section) =>
-      section.id === sectionId
-        ? {
-            ...section,
-            items: section.items.filter((item) => item.id !== itemId),
-          }
-        : section
-    );
-    onChange(newSections);
-  }, [sections, onChange]);
+  const removeItem = useCallback(
+    (sectionId: string, itemId: string) => {
+      const newSections = sections.map((section) =>
+        section.id === sectionId
+          ? {
+              ...section,
+              items: section.items.filter((item) => item.id !== itemId),
+            }
+          : section
+      );
+      onChange(newSections);
+    },
+    [sections, onChange]
+  );
 
   return (
     <div className="mt-6 space-y-6">
