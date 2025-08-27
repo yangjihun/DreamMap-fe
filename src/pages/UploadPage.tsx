@@ -35,6 +35,7 @@ type ProcessStatus = "idle" | "uploading" | "reviewing" | "done" | "error";
 export type DraftSection = {
   id: string;
   title: string;
+  itemTitle: string;
   text: string;
   key: string;
 };
@@ -70,7 +71,12 @@ const SectionCard: React.FC<{
     <div className="border border-gray-200 rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
         <Label className="text-base font-medium text-gray-700">
-          섹션 {index + 1}
+          <Input
+            placeholder="섹션 제목"
+            value={section.title}
+            onChange={(e) => onChange(section.id, { title: e.target.value })}
+            className="mb-2 placeholder:text-gray-400"
+          />
         </Label>
         {canRemove && (
           <Button
@@ -86,16 +92,17 @@ const SectionCard: React.FC<{
 
       <div className="grid gap-3">
         <Input
-          placeholder="섹션 제목"
-          value={section.title}
-          onChange={(e) => onChange(section.id, { title: e.target.value })}
-          className="mb-2"
-        />
+            placeholder="아이템 제목"
+            value={section.itemTitle}
+            onChange={(e) => onChange(section.id, { itemTitle: e.target.value })}
+            className="mb-2 placeholder:text-gray-400"
+          />
         <Textarea
-          placeholder="이 섹션에 들어갈 내용을 입력하세요..."
+          placeholder="이 아이템에 들어갈 내용을 입력하세요..."
           value={section.text}
           onChange={(e) => onChange(section.id, { text: e.target.value })}
           rows={index === 0 ? 4 : 5}
+          className="border-gray-300 placeholder:text-gray-400"
         />
         <div className="flex items-center justify-between text-xs text-gray-500">
           <span>문자수: {section.text.length}자</span>
@@ -111,7 +118,7 @@ const UploadPage: React.FC = () => {
   const [resumeTitle, setResumeTitle] = useState("");
   const [processStatus, setProcessStatus] = useState<ProcessStatus>("idle");
   const [sections, setSections] = useState<DraftSection[]>([
-    { id: crypto.randomUUID(), title: "", text: "", key: "intro" },
+    { id: crypto.randomUUID(), title: "", itemTitle: "", text: "", key: "intro" },
   ]);
 
   const navigate = useNavigate();
@@ -136,7 +143,7 @@ const UploadPage: React.FC = () => {
     const key = uniqueKey(`section-${sections.length + 1}`, existingKeys);
     setSections((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), title: "", text: "", key },
+      { id: crypto.randomUUID(), title: "", itemTitle: "", text: "", key },
     ]);
   }, [sections]);
 
@@ -261,7 +268,7 @@ const UploadPage: React.FC = () => {
                 placeholder="이력서 제목"
                 value={resumeTitle}
                 onChange={(e) => setResumeTitle(e.target.value)}
-                className="border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                className="border-2 border-gray-200 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                 required
               />
               <p className="text-sm text-gray-500 mt-2">
@@ -383,14 +390,6 @@ const UploadPage: React.FC = () => {
                     onRemove={removeSection}
                   />
                 ))}
-
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-700">
-                    💡 <strong>팁:</strong> 적어도 하나의 섹션에는 내용을
-                    입력해야 합니다. 제목은 선택사항이며, 비워두면 기본 제목이
-                    사용됩니다.
-                  </p>
-                </div>
               </div>
             )}
           </CardContent>
