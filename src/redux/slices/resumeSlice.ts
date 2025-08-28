@@ -207,13 +207,14 @@ export const createNewResumeFromFile = createAsyncThunk<
   try {
     const form = new FormData();
     form.append("file", payload.file);
-    form.append("sessionKey", payload.sessionKey || "intro");
+    //form.append("sessionKey", payload.sessionKey || "intro");
     form.append("resumeTitle", payload.resumeTitle);
-    if (payload.itemTitle) form.append("itemTitle", payload.itemTitle);
+    // if (payload.itemTitle) form.append("itemTitle", payload.itemTitle);
 
-    const res = await api.post("/resume/new", form, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    // const res = await api.post("/resume/new", form, {
+    //   headers: { "Content-Type": "multipart/form-data" },
+    // });
+    const res = await api.post("/resume/new", form);
     return res.data.data;
   } catch (error: any) {
     return rejectWithValue(
