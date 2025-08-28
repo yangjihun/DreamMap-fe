@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Textarea } from "./ui/textarea";
-import { X, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Check, Sparkles } from "lucide-react";
 
 // --- 인터페이스 및 데이터 ---
 export interface SignupData {
@@ -38,7 +38,7 @@ const steps = [
   {
     id: 0,
     title: "계정 정보",
-    description: "이메일, 비밀번호, 이름을 입력하세요",
+    description: "이름, 이메일, 비밀번호를 입력하세요",
   },
   { id: 1, title: "학교 정보", description: "학력 정보를 입력해주세요" },
   { id: 2, title: "전공", description: "전공 분야를 선택해주세요" },
@@ -388,11 +388,15 @@ export default function SignupModal({
         return null;
     }
   };
+  const useStepSignup = false; // 단계별 회원가입 사용여부(추후 기능 고도화 시 사용)
 
   return (
-    //<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div className="fixed inset-0 bg-white flex items-center justify-center z-50">
-      <Card className="w-full max-w-2xl mx-4">
+    <div className="fixed inset-0 bg-white flex items-center justify-center z-50 p-4">
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <Card className="relative bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div>
             <CardTitle className="text-xl font-semibold">
@@ -411,44 +415,58 @@ export default function SignupModal({
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-            />
-          </div>
+          {useStepSignup && (
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{
+                  width: `${((currentStep + 1) / steps.length) * 100}%`,
+                }}
+              />
+            </div>
+          )}
 
           {renderStepContent()}
-
-          <div className="flex justify-between pt-4">
-            <Button
-              variant="outline"
-              onClick={handlePrev}
-              disabled={currentStep === 0}
-              className="flex items-center"
-            >
-              <ChevronLeft className="h-4 w-4 mr-2" /> 이전
-            </Button>
-            <div className="flex space-x-2">
-              {currentStep < steps.length - 1 ? (
-                <Button
-                  onClick={handleNext}
-                  disabled={!isStepValid()}
-                  className="flex items-center"
-                >
-                  다음 <ChevronRight className="h-4 w-4 ml-2" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleComplete}
-                  disabled={!isStepValid()}
-                  className="flex items-center bg-green-600 hover:bg-green-700"
-                >
-                  <Check className="h-4 w-4 mr-2" /> 완료
-                </Button>
-              )}
+          {useStepSignup ? (
+            <div className="flex justify-between pt-4">
+              <Button
+                variant="outline"
+                onClick={handlePrev}
+                disabled={currentStep === 0}
+                className="flex items-center"
+              >
+                <ChevronLeft className="h-4 w-4 mr-2" /> 이전
+              </Button>
+              <div className="flex space-x-2">
+                {currentStep < steps.length - 1 ? (
+                  <Button
+                    onClick={handleNext}
+                    disabled={!isStepValid()}
+                    className="flex items-center"
+                  >
+                    다음 <ChevronRight className="h-4 w-4 ml-2" />
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleComplete}
+                    disabled={!isStepValid()}
+                    className="flex items-center bg-green-600 hover:bg-green-700"
+                  >
+                    <Check className="h-4 w-4 mr-2" /> 완료
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <Button
+              onClick={handleComplete}
+              disabled={!isStepValid()}
+              className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg mt-6"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              가입완료
+            </Button>
+          )}
         </CardContent>
       </Card>
     </div>
