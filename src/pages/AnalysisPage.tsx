@@ -357,7 +357,8 @@ export default function AnalysisPage() {
                         <div className="text-sm text-blue-800">
                           <p className="font-medium mb-1">팁:</p>
                           <p>
-                            이 항목을 클릭하여 더 자세한 피드백을 확인하세요.
+                            왼쪽의 텍스트를를 클릭하여 더 자세한 피드백을
+                            확인하세요.
                           </p>
                         </div>
                       </div>
