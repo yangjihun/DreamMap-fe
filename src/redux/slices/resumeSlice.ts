@@ -13,11 +13,11 @@ const initialState: ResumeState = {
 // 전체 목록
 export const fetchResumes = createAsyncThunk<
   Resume[],
-  void,
+  { name?: string} | undefined,
   { rejectValue: string }
->("resume/fetchResumes", async (_, { rejectWithValue }) => {
+>("resume/fetchResumes", async (query: any, { rejectWithValue }) => {
   try {
-    const res = await api.get("/resume/all");
+    const res = await api.get("/resume/all", { params: {...query || {}}});
     // 이력서 정렬(즐겨찾기 우선, updateAt 최신순)
     const sortedResumes = res.data.data.sort((a: Resume, b: Resume) => {
       if (a.starred !== b.starred) return a.starred ? -1 : 1;
@@ -26,9 +26,7 @@ export const fetchResumes = createAsyncThunk<
     });
     return sortedResumes;
   } catch (e: any) {
-    return rejectWithValue(
-      e.response?.data?.message ?? "이력서 목록 로드 실패"
-    );
+    return rejectWithValue(e.response?.data?.message ?? "이력서 목록 로드 실패");
   }
 });
 
