@@ -1,3 +1,4 @@
+import Header from "@/components/ui/header";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import {
@@ -10,33 +11,14 @@ import {
   Award,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAppSelector } from "@/redux/hooks";
 
 export default function HomePage() {
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="h-6 w-6 text-white" />
-              </div>
-              <h1 className="text-xl font-semibold text-gray-900">미래지도</h1>
-            </div>
-            <Link to="/login">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-gray-600 hover:text-gray-900"
-              >
-                <User className="h-4 w-4 mr-2" />
-                로그인
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -195,15 +177,17 @@ export default function HomePage() {
                 무료로 시작하기
               </Button>
             </Link>
-            <Link to="/login">
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-3 bg-transparent"
-              >
-                로그인
-              </Button>
-            </Link>
+            {!isAuthenticated && !user && (
+              <Link to="/login">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-3 bg-transparent"
+                >
+                  로그인
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </main>
