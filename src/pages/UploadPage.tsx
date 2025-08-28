@@ -111,7 +111,7 @@ const UploadPage: React.FC = () => {
         }
         const payloadSections: Record<
           string,
-          { title: string; items: Array<{ title: string; text: string }> }
+          { title: string; items: Array<{ title: string; text: string; startDate?: string; endDate?: string; companyAddress?: string }> }
         > = {};
         validSections.forEach((s) => {
           const key = s.key || slugify(s.title || "section");
@@ -120,6 +120,9 @@ const UploadPage: React.FC = () => {
             .map((item) => ({
               title: item.title.trim() || "새 항목",
               text: item.text.trim(),
+              startDate: item.startDate || undefined,
+              endDate: item.endDate || undefined,
+              companyAddress: item.companyAddress || undefined,
             }));
 
           payloadSections[key] = {

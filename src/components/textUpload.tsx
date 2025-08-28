@@ -1,8 +1,9 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useRef, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Plus } from "lucide-react";
-const KEYWORDS = ['경력', '학력', '프로젝트', '수상', '인증', '활동', '경험'];
+
+const KEYWORDS = ['경력', '학력', '프로젝트', '수상', '인증', '활동', '경험', 'project', 'award'];
 
 export type DraftItem = {
   id: string;
@@ -26,7 +27,8 @@ interface TextUploadProps {
 }
 
 export function hasRealContent(text: string): boolean {
-  return text.replace(/^•\s*/gm, "").trim().length > 0;
+  const cleanText = text.replace(/^•\s*/gm, "").trim();
+  return cleanText.length > 0;
 }
 
 function slugify(raw: string) {
@@ -49,12 +51,20 @@ function uniqueKey(baseTitle: string, existing: string[]) {
   return k;
 }
 
+/** 제로폭 문자/비표준 공백 제거 유틸 */
+const clean = (raw: string) =>
+  (raw ?? "")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/\u00A0/g, " ");
+
 const ItemBlock: React.FC<{
   item: DraftItem;
   canRemove: boolean;
   onChange: (id: string, patch: Partial<DraftItem>) => void;
   onRemove: (id: string) => void;
 }> = ({ item, canRemove, onChange, onRemove }) => {
+  const composingRef = useRef(false);
+
   const showMeta = useMemo(() => {
     const trimTitle = (item.title ?? "").trim();
     if (!trimTitle) return false;
@@ -68,7 +78,7 @@ const ItemBlock: React.FC<{
 
   const handleCompanyAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(item.id, { companyAddress: e.target.value });
-  }
+  };
 
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(item.id, { startDate: e.target.value });
@@ -76,29 +86,39 @@ const ItemBlock: React.FC<{
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(item.id, { endDate: e.target.value });
-  }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (composingRef.current) return;
+
     if (e.key === "Enter") {
       e.preventDefault();
-      const { selectionStart, value } = e.currentTarget;
-      const newValue =
-        value.substring(0, selectionStart) +
-        "\n• " +
-        value.substring(selectionStart);
-      onChange(item.id, { text: newValue });
+      const { selectionStart, selectionEnd, value } = e.currentTarget;
+      const before = value.substring(0, selectionStart);
+      const after = value.substring(selectionEnd);
+      const currentLine = before.split('\n').pop() || "";
+      const shouldAddBullet = currentLine.trim() !== "" && currentLine.trim() !== "•";
+      const insert = "\n" + (shouldAddBullet ? "• " : "");
+      onChange(item.id, { text: before + insert + after });
     }
   };
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    let value = e.target.value;
-    if (value.length === 0) {
-      value = "• ";
-    } else if (value.length === 1 && value !== "•") {
-      value = "• " + value;
+    const raw0 = e.target.value;
+    const raw = clean(raw0);
+
+    if (composingRef.current) {
+      onChange(item.id, { text: raw });
+      return;
     }
 
-    onChange(item.id, { text: value });
+    const trimmed = raw.trim();
+    if (trimmed === "" || trimmed === "•" || trimmed === "•") {
+      onChange(item.id, { text: "" });
+      return;
+    }
+    const next = raw.startsWith("• ") ? raw : `• ${raw}`;
+    onChange(item.id, { text: next });
   };
 
   return (
@@ -134,13 +154,13 @@ const ItemBlock: React.FC<{
           </Button>
         )}
       </div>
+
       {showMeta && (
-        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-0 mb-3">
           <div>
-            <h1>회사/기관명</h1>
+            <h1>회사/기관/개인</h1>
             <input
-              placeholder="회사/기관명"
+              placeholder="회사/기관/개인"
               value={item.companyAddress}
               onChange={handleCompanyAddressChange}
               className="h-10 border-2 border-gray-200 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 px-3 rounded-md"
@@ -168,11 +188,25 @@ const ItemBlock: React.FC<{
           </div>
         </div>
       )}
+
       <textarea
         placeholder="내용을 입력하세요"
         value={item.text}
         onChange={handleTextChange}
         onKeyDown={handleKeyDown}
+        onCompositionStart={() => { composingRef.current = true; }}
+        onCompositionEnd={(e) => {
+          composingRef.current = false;
+          const raw = clean(e.currentTarget.value);
+          const trimmed = raw.trim();
+          if (trimmed === "" || trimmed === "•") {
+            onChange(item.id, { text: "" });
+          } else if (!raw.startsWith("• ")) {
+            onChange(item.id, { text: `• ${raw}` });
+          }
+        }}
+        autoComplete="off"
+        spellCheck={false}
         className="border-2 border-gray-200 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 min-h-[100px] w-full px-3 py-2 rounded-md resize-none"
       />
       <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
@@ -197,6 +231,7 @@ const SectionCard: React.FC<{
   onItemRemove: (sectionId: string, itemId: string) => void;
 }> = ({
   section,
+  index,
   canRemove,
   onChange,
   onRemove,
@@ -291,6 +326,25 @@ const SectionCard: React.FC<{
 };
 
 const TextUpload: React.FC<TextUploadProps> = ({ sections, onChange }) => {
+  useEffect(() => {
+    let dirty = false;
+    const fixed = sections.map((sec) => {
+      const items = sec.items.map((it) => {
+        const v = clean(it.text ?? "");
+        const t = v.trim();
+        if (t === "" || t === "•") {
+          if (it.text !== "") dirty = true;
+          return { ...it, text: "" };
+        }
+        return it;
+      });
+      const changed =
+        items.length !== sec.items.length ||
+        items.some((it, idx) => it.text !== sec.items[idx].text);
+      return changed ? { ...sec, items } : sec;
+    });
+    if (dirty) onChange(fixed);
+  }, []);
 
   const addSection = useCallback(() => {
     const existingKeys = sections.map((s) => s.key);
@@ -300,7 +354,7 @@ const TextUpload: React.FC<TextUploadProps> = ({ sections, onChange }) => {
       {
         id: crypto.randomUUID(),
         title: "",
-        items: [{ id: crypto.randomUUID(), title: "", text: "• ", companyAddress: "", startDate: "", endDate: "" }],
+        items: [{ id: crypto.randomUUID(), title: "", text: "", companyAddress: "", startDate: "", endDate: "" }],
         key,
       },
     ];
@@ -358,7 +412,7 @@ const TextUpload: React.FC<TextUploadProps> = ({ sections, onChange }) => {
               ...section,
               items: [
                 ...section.items,
-                { id: crypto.randomUUID(), title: "", text: "• ", companyAddress: "", startDate: "", endDate: "" },
+                { id: crypto.randomUUID(), title: "", text: "", companyAddress: "", startDate: "", endDate: "" },
               ],
             }
           : section
