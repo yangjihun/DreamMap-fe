@@ -150,20 +150,18 @@ const UploadPage: React.FC = () => {
           return;
         }
         setProcessStatus("uploading");
-        // const result = await dispatch(
-        //   createNewResumeFromFile({
-        //     file: selectedFile,
-        //     sessionKey: "intro",
-        //     itemTitle: undefined,
-        //     resumeTitle: resumeTitle.trim(),
-        //   })
-        // ).unwrap();
+        
         const result = await dispatch(
           createNewResumeFromFile({
-            file: selectedFile, // 이 시점에는 selectedFile이 null이 아님이 보장됨
+            file: selectedFile,
             resumeTitle: resumeTitle.trim(),
           })
         ).unwrap();
+
+        setProcessStatus("reviewing");
+        await dispatch(getAiReview(result.id));
+        dispatch(setHasFeedbackResume(false));
+
         setProcessStatus("done");
         if (result?.id) navigate(`/analysis/${result.id}`);
       }
