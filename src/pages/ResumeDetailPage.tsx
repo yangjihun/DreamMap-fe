@@ -627,6 +627,10 @@ export default function ResumeDetailPage() {
             <Button
               variant="outline"
               onClick={() => {
+                const hasOldText = resume?.sessions?.some((session) =>
+                  session.items.some((item) => !!item.oldText)
+                );
+                dispatch(setHasFeedbackResume(hasOldText));
                 navigate(`/analysis/${id}`);
               }}
               className="border-gray-200"

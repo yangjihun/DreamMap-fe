@@ -7,9 +7,7 @@ const initialState: ResumeState = {
   resume: null,
   loading: false,
   error: null,
-  hasFeedbackResume: JSON.parse(
-    localStorage.getItem("hasFeedbackResume") || "false"
-  ),
+  hasFeedbackResume: false,
 };
 
 // 전체 목록
@@ -271,7 +269,6 @@ const resumeSlice = createSlice({
     setHasFeedbackResume: (state, action) => {
       // 피드백 반영한 새 이력서 존재 여부 함수
       state.hasFeedbackResume = action.payload;
-      localStorage.setItem("hasFeedbackResume", JSON.stringify(action.payload));
     },
   },
   extraReducers: (builder) => {
