@@ -15,9 +15,9 @@ const LOCAL_BACKEND =
 const api: AxiosInstance = axios.create({
   baseURL: `${LOCAL_BACKEND}/api`,
   withCredentials: false,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  // headers: {
+  //   "Content-Type": "application/json",
+  // }, <-axios가 자동으로 헤더 붙여줌줌
 });
 
 api.interceptors.request.use(

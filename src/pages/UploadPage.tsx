@@ -137,6 +137,7 @@ const UploadPage: React.FC = () => {
             sections: payloadSections,
           })
         ).unwrap();
+
         setProcessStatus("reviewing");
         await dispatch(getAiReview(result.id));
         dispatch(setHasFeedbackResume(false));
@@ -145,14 +146,21 @@ const UploadPage: React.FC = () => {
       } else {
         if (!selectedFile) {
           window.alert("파일을 선택해주세요.");
+          setProcessStatus("idle"); //
           return;
         }
         setProcessStatus("uploading");
+        // const result = await dispatch(
+        //   createNewResumeFromFile({
+        //     file: selectedFile,
+        //     sessionKey: "intro",
+        //     itemTitle: undefined,
+        //     resumeTitle: resumeTitle.trim(),
+        //   })
+        // ).unwrap();
         const result = await dispatch(
           createNewResumeFromFile({
-            file: selectedFile,
-            sessionKey: "intro",
-            itemTitle: undefined,
+            file: selectedFile, // 이 시점에는 selectedFile이 null이 아님이 보장됨
             resumeTitle: resumeTitle.trim(),
           })
         ).unwrap();

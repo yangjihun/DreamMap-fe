@@ -18,6 +18,7 @@ import {
   FileText,
   MessageSquare,
   Eye,
+  Pencil,
 } from "lucide-react";
 import { ResumeSession, ResumeItem } from "../types/resume";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
@@ -129,13 +130,11 @@ export default function AnalysisPage() {
   }, [id]);
 
   useEffect(() => {
-    if (
-      resume?.sessions.map((session) =>
-        session.items.map((item) => !!item.oldText)
-      )
-    )
-      dispatch(setHasFeedbackResume(true));
-  }, []);
+    const hasOldText = resume?.sessions?.some((session) =>
+      session.items.some((item) => !!item.oldText)
+    );
+    dispatch(setHasFeedbackResume(hasOldText));
+  }, [resume]);
 
   const getSessionIcon = (key: string) => {
     switch (key) {
@@ -180,11 +179,11 @@ export default function AnalysisPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(`/resume/${id}`)}
+              onClick={() => navigate(`/dashboard`)}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              뒤로가기
+              목록으로
             </Button>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
@@ -204,23 +203,32 @@ export default function AnalysisPage() {
         {/* 액션 버튼들 */}
         <div className="flex items-center gap-3 mb-8">
           <Button
-            onClick={handleMergeFeedback}
-            disabled={isGenerating}
-            className="flex items-center gap-2"
+            variant="outline"
+            onClick={() => navigate(`/resume/${id}`)}
+            className="mr-3"
           >
-            {isGenerating ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                생성 중...
-              </>
-            ) : (
-              <>
-                <Star className="h-4 w-4" />
-                피드백 반영하여 새 이력서 생성
-              </>
-            )}
+            <Pencil className="w-4 h-4 mr-1" />
+            이력서 수정
           </Button>
-          {hasFeedbackResume && (
+          {!hasFeedbackResume ? (
+            <Button
+              onClick={handleMergeFeedback}
+              disabled={isGenerating}
+              className="flex items-center gap-2"
+            >
+              {isGenerating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  생성 중...
+                </>
+              ) : (
+                <>
+                  <Star className="h-4 w-4" />
+                  피드백 반영하여 새 이력서 생성
+                </>
+              )}
+            </Button>
+          ) : (
             <Button
               variant="outline"
               onClick={() => setShowPDFPreview(true)}

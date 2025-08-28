@@ -7,9 +7,7 @@ const initialState: ResumeState = {
   resume: null,
   loading: false,
   error: null,
-  hasFeedbackResume: JSON.parse(
-    localStorage.getItem("hasFeedbackResume") || "false"
-  ),
+  hasFeedbackResume: false,
 };
 
 // 전체 목록
@@ -207,13 +205,14 @@ export const createNewResumeFromFile = createAsyncThunk<
   try {
     const form = new FormData();
     form.append("file", payload.file);
-    form.append("sessionKey", payload.sessionKey || "intro");
+    //form.append("sessionKey", payload.sessionKey || "intro");
     form.append("resumeTitle", payload.resumeTitle);
-    if (payload.itemTitle) form.append("itemTitle", payload.itemTitle);
+    // if (payload.itemTitle) form.append("itemTitle", payload.itemTitle);
 
-    const res = await api.post("/resume/new", form, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    // const res = await api.post("/resume/new", form, {
+    //   headers: { "Content-Type": "multipart/form-data" },
+    // });
+    const res = await api.post("/resume/new", form);
     return res.data.data;
   } catch (error: any) {
     return rejectWithValue(
@@ -270,7 +269,6 @@ const resumeSlice = createSlice({
     setHasFeedbackResume: (state, action) => {
       // 피드백 반영한 새 이력서 존재 여부 함수
       state.hasFeedbackResume = action.payload;
-      localStorage.setItem("hasFeedbackResume", JSON.stringify(action.payload));
     },
   },
   extraReducers: (builder) => {

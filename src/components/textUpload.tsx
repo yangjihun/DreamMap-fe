@@ -231,7 +231,6 @@ const SectionCard: React.FC<{
   onItemRemove: (sectionId: string, itemId: string) => void;
 }> = ({
   section,
-  index,
   canRemove,
   onChange,
   onRemove,

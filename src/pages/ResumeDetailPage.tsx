@@ -758,7 +758,17 @@ export default function ResumeDetailPage() {
 
         {!isEdit && (
           <div className="flex justify-end gap-3 mt-8">
-            <Button variant="outline" onClick={() => navigate(`/analysis/${id}`)} className="border-gray-200">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const hasOldText = resume?.sessions?.some((session) =>
+                  session.items.some((item) => !!item.oldText)
+                );
+                dispatch(setHasFeedbackResume(hasOldText));
+                navigate(`/analysis/${id}`);
+              }}
+              className="border-gray-200"
+            >
               이전 분석 보러가기
             </Button>
             <Button variant="default" onClick={handleNewReview} className="border-gray-200" disabled={isReviewing}>
