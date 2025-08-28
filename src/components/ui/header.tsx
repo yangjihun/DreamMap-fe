@@ -9,7 +9,7 @@ import { Sparkles, Search, User, Settings, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "./avatar";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { logout } from "../../redux/slices/authSlice";
-import { createSearchParams, useLocation, useNavigate } from "react-router-dom";
+import { createSearchParams, Link, useLocation, useNavigate } from "react-router-dom";
 
 export default function Header() {
   const dispatch = useAppDispatch();
@@ -107,7 +107,16 @@ export default function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="text-sm text-gray-500">Loading...</div>
+              <Link to="/login">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  로그인
+                </Button>
+            </Link>
             )}
           </div>
         </div>
