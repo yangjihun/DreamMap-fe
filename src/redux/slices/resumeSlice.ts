@@ -8,27 +8,29 @@ const initialState: ResumeState = {
   loading: false,
   error: null,
   hasFeedbackResume: false,
+  isEdit: false,
 };
+
+const sortResumes = (list: Resume[]) =>
+  // 이력서 정렬(즐겨찾기 우선, updateAt 최신순)
+  list.slice().sort((a, b) => {
+    if (a.starred !== b.starred) return a.starred ? -1 : 1;
+    // updateAt 내림차순
+    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+  });
+
 
 // 전체 목록
 export const fetchResumes = createAsyncThunk<
   Resume[],
-  void,
+  { name?: string} | undefined,
   { rejectValue: string }
->("resume/fetchResumes", async (_, { rejectWithValue }) => {
+>("resume/fetchResumes", async (query: any, { rejectWithValue }) => {
   try {
-    const res = await api.get("/resume/all");
-    // 이력서 정렬(즐겨찾기 우선, updateAt 최신순)
-    const sortedResumes = res.data.data.sort((a: Resume, b: Resume) => {
-      if (a.starred !== b.starred) return a.starred ? -1 : 1;
-      // updateAt 내림차순
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-    });
-    return sortedResumes;
+    const res = await api.get("/resume/all", { params: {...query || {}}});
+    return sortResumes(res.data.data as Resume[]);
   } catch (e: any) {
-    return rejectWithValue(
-      e.response?.data?.message ?? "이력서 목록 로드 실패"
-    );
+    return rejectWithValue(e.response?.data?.message ?? "이력서 목록 로드 실패");
   }
 });
 
@@ -150,14 +152,13 @@ export const addItemToSession = createAsyncThunk<
 
 // 즐겨찾기 토글
 export const toggleStar = createAsyncThunk<
-  { id: string; starred: boolean },
+  Resume,
   string,
   { rejectValue: string }
->("resume/toggleStarred", async (resumeId, { dispatch, rejectWithValue }) => {
+>("resume/toggleStarred", async (resumeId, { rejectWithValue }) => {
   try {
     const res = await api.put(`/resume/${resumeId}/star`);
-    dispatch(fetchResumes());
-    return res.data.data;
+    return res.data.data as Resume;
   } catch (error: any) {
     return rejectWithValue(
       error.response?.data?.message ?? "즐겨찾기 변경 실패"
@@ -196,8 +197,6 @@ export const createNewResumeFromFile = createAsyncThunk<
   Resume,
   {
     file: File;
-    sessionKey?: ResumeSession["key"];
-    itemTitle?: string;
     resumeTitle: string;
   },
   { rejectValue: string }
@@ -205,19 +204,12 @@ export const createNewResumeFromFile = createAsyncThunk<
   try {
     const form = new FormData();
     form.append("file", payload.file);
-    //form.append("sessionKey", payload.sessionKey || "intro");
     form.append("resumeTitle", payload.resumeTitle);
-    // if (payload.itemTitle) form.append("itemTitle", payload.itemTitle);
 
-    // const res = await api.post("/resume/new", form, {
-    //   headers: { "Content-Type": "multipart/form-data" },
-    // });
     const res = await api.post("/resume/new", form);
     return res.data.data;
   } catch (error: any) {
-    return rejectWithValue(
-      error.response?.data?.message ?? "이력서 생성(파일) 실패"
-    );
+    return rejectWithValue(error.message ?? "AI 리뷰 실패");
   }
 });
 
@@ -269,6 +261,9 @@ const resumeSlice = createSlice({
     setHasFeedbackResume: (state, action) => {
       // 피드백 반영한 새 이력서 존재 여부 함수
       state.hasFeedbackResume = action.payload;
+    },
+    setIsEdit: (state, action) => {
+      state.isEdit = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -370,8 +365,11 @@ const resumeSlice = createSlice({
       .addCase(toggleStar.fulfilled, (state, action) => {
         state.loading = false;
         state.error = "";
-        const r = state.resumes.find((x) => x.id === action.payload.id);
-        if (r) r.starred = action.payload.starred;
+        const i = state.resumes.findIndex((x) => x.id === action.payload.id);
+        if (i !== -1) {
+          state.resumes[i] = { ...state.resumes[i], ...action.payload };
+          state.resumes = sortResumes(state.resumes);
+        }
         if (state.resume?.id === action.payload.id)
           state.resume.starred = action.payload.starred;
       })
@@ -452,6 +450,6 @@ const resumeSlice = createSlice({
   },
 });
 
-export const { setHasFeedbackResume } = resumeSlice.actions;
+export const { setHasFeedbackResume, setIsEdit } = resumeSlice.actions;
 
 export default resumeSlice.reducer;

@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
 import { FileText, MoreVertical, Star, Trash2, Eye } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "../redux/hooks";
 import {
   deleteResume,
@@ -38,12 +38,15 @@ const templates = [
 
 export default function DashboardPage() {
   const dispatch = useAppDispatch();
+  const location = useLocation();
   const navigate = useNavigate();
   const { resumes, loading, error } = useAppSelector((state) => state.resume);
 
   useEffect(() => {
-    dispatch(fetchResumes());
-  }, [dispatch]);
+    const params = new URLSearchParams(location.search);
+    const name = params.get("name") || undefined;
+    dispatch(fetchResumes({ name }));
+  }, [location.search, dispatch]);
 
   useEffect(() => {
     if (error) {

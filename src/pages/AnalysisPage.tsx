@@ -27,6 +27,7 @@ import {
   getResume,
   generateResumeWithReview,
   setHasFeedbackResume,
+  setIsEdit,
 } from "../redux/slices/resumeSlice";
 import { PDFPreviewModal } from "@/components/resume-to-pdf/PDFPreviewModal";
 //import { createRoadmap } from "@/redux/slices/roadmapSlice";
@@ -162,6 +163,10 @@ export default function AnalysisPage() {
     }
   };
 
+  const goToEdit = () => {
+    dispatch(setIsEdit(true));
+    navigate(`/resume/${id}`);
+  };
   /*const handleRoadmapCreate = () => {
     if (!!id) {
       dispatch(createRoadmap(id));
@@ -202,11 +207,7 @@ export default function AnalysisPage() {
 
         {/* 액션 버튼들 */}
         <div className="flex items-center gap-3 mb-8">
-          <Button
-            variant="outline"
-            onClick={() => navigate(`/resume/${id}`)}
-            className="mr-3"
-          >
+          <Button variant="outline" onClick={goToEdit} className="mr-3">
             <Pencil className="w-4 h-4 mr-1" />
             이력서 수정
           </Button>

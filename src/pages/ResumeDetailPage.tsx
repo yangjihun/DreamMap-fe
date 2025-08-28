@@ -24,6 +24,7 @@ import {
   getResume,
   patchResume,
   setHasFeedbackResume,
+  setIsEdit,
 } from "@/redux/slices/resumeSlice";
 import type {
   Resume as ResumeModel,
@@ -322,9 +323,8 @@ export default function ResumeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { resume, loading, error } = useAppSelector((s) => s.resume);
+  const { resume, loading, error, isEdit } = useAppSelector((s) => s.resume);
   const [draft, setDraft] = useState<ResumeModel | null>(null);
-  const [isEdit, setIsEdit] = useState(false);
 
   const [addSectionOpen, setAddSectionOpen] = useState(false);
   const [sectionTitle, setSectionTitle] = useState("");
@@ -371,7 +371,7 @@ export default function ResumeDetailPage() {
           patch: { title: draft.title, sessions: draft.sessions, replaceSessions: true } as any,
         })
       ).unwrap();
-      setIsEdit(false);
+      dispatch(setIsEdit(false));
     } catch (e: any) {
       alert(typeof e === "string" ? e : e?.message ?? "저장 실패");
     }
@@ -415,7 +415,7 @@ export default function ResumeDetailPage() {
   const cancelEdit = () => {
     if (!window.confirm("편집된 내용을 모두 삭제할까요? 저장하지 않은 변경사항이 사라집니다.")) return;
     if (resume) setDraft(structuredClone(resume));
-    setIsEdit(false);
+    dispatch(setIsEdit(false));
     setAddingKey(null);
     setNewTitle("");
     setNewText("");
@@ -437,7 +437,15 @@ export default function ResumeDetailPage() {
       <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-gray-200 shadow-[0_1px_0_0_rgba(0,0,0,0.02)]">
         <div className="max-w-4xl mx-auto px-6 py-3">
           <div className="flex items-center justify-between">
-            <Button onClick={() => navigate("/dashboard")} variant="ghost" size="sm" className="hover:bg-gray-50">
+            <Button
+              onClick={() => {
+                dispatch(setIsEdit(false));
+                navigate("/dashboard");
+              }}
+              variant="ghost"
+              size="sm"
+              className="hover:bg-gray-50"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" /> 목록으로
             </Button>
             <div className="flex items-center gap-3">
@@ -445,7 +453,12 @@ export default function ResumeDetailPage() {
                 <Star className="h-3 w-3 mr-1" /> {draft.score}점
               </Badge>
               {!isEdit ? (
-                <Button onClick={() => setIsEdit(true)} variant="outline" size="sm" className="border-gray-200">
+                <Button
+                  onClick={() => dispatch(setIsEdit(true))}
+                  variant="outline"
+                  size="sm"
+                  className="border-gray-200"
+                >
                   <Pencil className="h-4 w-4 mr-2" /> 편집
                 </Button>
               ) : (

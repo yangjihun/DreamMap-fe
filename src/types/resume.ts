@@ -34,4 +34,5 @@ export interface ResumeState {
   loading: boolean;
   error: string | null;
   hasFeedbackResume?: boolean;
+  isEdit: boolean;
 }
