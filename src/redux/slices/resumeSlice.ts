@@ -8,13 +8,14 @@ const initialState: ResumeState = {
   loading: false,
   error: null,
   hasFeedbackResume: false,
+  isEdit: false,
 };
 
 const sortResumes = (list: Resume[]) =>
   // 이력서 정렬(즐겨찾기 우선, updateAt 최신순)
   list.slice().sort((a, b) => {
     if (a.starred !== b.starred) return a.starred ? -1 : 1;
-      // updateAt 내림차순
+    // updateAt 내림차순
     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
   });
 
@@ -204,7 +205,7 @@ export const createNewResumeFromFile = createAsyncThunk<
     const form = new FormData();
     form.append("file", payload.file);
     form.append("resumeTitle", payload.resumeTitle);
-   
+
     const res = await api.post("/resume/new", form);
     return res.data.data;
   } catch (error: any) {
@@ -260,6 +261,9 @@ const resumeSlice = createSlice({
     setHasFeedbackResume: (state, action) => {
       // 피드백 반영한 새 이력서 존재 여부 함수
       state.hasFeedbackResume = action.payload;
+    },
+    setIsEdit: (state, action) => {
+      state.isEdit = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -446,6 +450,6 @@ const resumeSlice = createSlice({
   },
 });
 
-export const { setHasFeedbackResume } = resumeSlice.actions;
+export const { setHasFeedbackResume, setIsEdit } = resumeSlice.actions;
 
 export default resumeSlice.reducer;
