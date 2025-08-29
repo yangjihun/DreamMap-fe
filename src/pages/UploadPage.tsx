@@ -18,6 +18,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import Header from "@/components/ui/header";
+import { LoadingAnimation } from "@/components/ui/loading-animation";
 import {
   createNewResumeFromFile,
   createNewResumeWithSections,
@@ -53,7 +54,16 @@ const UploadPage: React.FC = () => {
     {
       id: crypto.randomUUID(),
       title: "",
-      items: [{ id: crypto.randomUUID(), title: "", text: "• ", companyAddress: "", startDate: "", endDate: "" }],
+      items: [
+        {
+          id: crypto.randomUUID(),
+          title: "",
+          text: "• ",
+          companyAddress: "",
+          startDate: "",
+          endDate: "",
+        },
+      ],
       key: "intro",
     },
   ]);
@@ -111,7 +121,16 @@ const UploadPage: React.FC = () => {
         }
         const payloadSections: Record<
           string,
-          { title: string; items: Array<{ title: string; text: string; startDate?: string; endDate?: string; companyAddress?: string }> }
+          {
+            title: string;
+            items: Array<{
+              title: string;
+              text: string;
+              startDate?: string;
+              endDate?: string;
+              companyAddress?: string;
+            }>;
+          }
         > = {};
         validSections.forEach((s) => {
           const key = s.key || slugify(s.title || "section");
@@ -150,7 +169,7 @@ const UploadPage: React.FC = () => {
           return;
         }
         setProcessStatus("uploading");
-        
+
         const result = await dispatch(
           createNewResumeFromFile({
             file: selectedFile,
@@ -178,161 +197,170 @@ const UploadPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            새 이력서 생성
-          </h1>
-          <p className="text-lg text-gray-600">
-            새로운 이력서를 생성합니다. 파일을 업로드하거나 텍스트를 직접
-            입력하세요.
-          </p>
+
+      {/* Show LoadingAnimation for uploading and reviewing states */}
+      {processStatus === "uploading" || processStatus === "reviewing" ? (
+        <LoadingAnimation
+          title={
+            processStatus === "uploading"
+              ? "이력서를 생성하고 있습니다"
+              : "AI 분석 중입니다"
+          }
+          description={
+            processStatus === "uploading"
+              ? "이력서를 업로드하고 데이터를 처리하고 있어요. 잠시만 기다려주세요!"
+              : "AI가 이력서를 분석하고 개선점을 찾아내고 있어요. 잠시만 기다려주세요!"
+          }
+          progress={processStatus === "uploading" ? 40 : 70}
+          variant="upload"
+        />
+      ) : (
+        <div className="max-w-4xl mx-auto px-6 py-8">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              새 이력서 생성하기
+            </h1>
+            <p className="text-lg text-gray-600">
+              파일을 업로드하거나 텍스트를 입력하여 AI가 분석한 이력서를
+              만들어보세요
+            </p>
+          </div>
+
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center text-xl">
+                이력서 제목
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6">
+                <Input
+                  id="resume-title"
+                  type="text"
+                  placeholder="이력서 제목"
+                  value={resumeTitle}
+                  onChange={(e) => setResumeTitle(e.target.value)}
+                  className="border-2 border-gray-200 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                  required
+                />
+              </div>
+            </CardContent>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                업로드 방법 선택
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg">
+                <button
+                  type="button"
+                  aria-pressed={uploadMethod === "file"}
+                  onClick={() => setUploadMethod("file")}
+                  className={`flex items-center justify-center py-3 px-6 rounded-md transition-all duration-200 ${
+                    uploadMethod === "file"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : ""
+                  }`}
+                >
+                  <FileIcon className="h-5 w-5 mr-2" /> 파일 업로드
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={uploadMethod === "text"}
+                  onClick={() => setUploadMethod("text")}
+                  className={`flex items-center justify-center py-3 px-6 rounded-md transition-all duration-200 ${
+                    uploadMethod === "text"
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : ""
+                  }`}
+                >
+                  <FileText className="h-5 w-5 mr-2" /> 텍스트 입력
+                </button>
+              </div>
+              {uploadMethod === "file" && (
+                <FileUpload
+                  selectedFile={selectedFile}
+                  onFileSelect={handleFileSelect}
+                  onFileRemove={() => setSelectedFile(null)}
+                />
+              )}
+
+              {uploadMethod === "text" && (
+                <TextUpload sections={sections} onChange={setSections} />
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="mb-8">
+            <CardContent className="pt-8 pb-8">
+              <div className="text-center">
+                <Button
+                  onClick={handleAnalyze}
+                  disabled={isAnalyzeDisabled}
+                  size="lg"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-12 py-4 text-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 rounded-xl"
+                >
+                  {processStatus === "done" ? (
+                    <>
+                      <CheckCircle className="h-6 w-6 mr-3 text-green-600" />
+                      <span>Resume 생성이 완료되었습니다.</span>
+                    </>
+                  ) : processStatus === "error" ? (
+                    <>
+                      <AlertCircle className="h-6 w-6 mr-3 text-red-600" />
+                      <span>오류가 발생했습니다. 다시 시도해주세요.</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-6 w-6 mr-3" /> 새 이력서 생성하기
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-2">AI 분석</h3>
+                <p className="text-sm text-gray-600">
+                  최신 AI 기술로 이력서를 분석하고 개선점을 제안합니다
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <FileText className="h-6 w-6 text-green-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  맞춤형 피드백
+                </h3>
+                <p className="text-sm text-gray-600">
+                  IT 업계 표준에 맞는 구체적인 개선 방향을 제시합니다
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="h-6 w-6 text-purple-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-2">즉시 결과</h3>
+                <p className="text-sm text-gray-600">
+                  몇 분 내에 분석 결과와 개선된 이력서를 받아보세요
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center text-xl">
-              이력서 제목
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-6">
-              <Input
-                id="resume-title"
-                type="text"
-                placeholder="이력서 제목"
-                value={resumeTitle}
-                onChange={(e) => setResumeTitle(e.target.value)}
-                className="border-2 border-gray-200 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                required
-              />
-            </div>
-          </CardContent>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              업로드 방법 선택
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg">
-              <button
-                type="button"
-                aria-pressed={uploadMethod === "file"}
-                onClick={() => setUploadMethod("file")}
-                className={`flex items-center justify-center py-3 px-6 rounded-md transition-all duration-200 ${
-                  uploadMethod === "file"
-                    ? "bg-white text-blue-600 shadow-sm"
-                    : ""
-                }`}
-              >
-                <FileIcon className="h-5 w-5 mr-2" /> 파일 업로드
-              </button>
-              <button
-                type="button"
-                aria-pressed={uploadMethod === "text"}
-                onClick={() => setUploadMethod("text")}
-                className={`flex items-center justify-center py-3 px-6 rounded-md transition-all duration-200 ${
-                  uploadMethod === "text"
-                    ? "bg-white text-blue-600 shadow-sm"
-                    : ""
-                }`}
-              >
-                <FileText className="h-5 w-5 mr-2" /> 텍스트 입력
-              </button>
-            </div>
-            {uploadMethod === "file" && (
-              <FileUpload
-                selectedFile={selectedFile}
-                onFileSelect={handleFileSelect}
-                onFileRemove={() => setSelectedFile(null)}
-              />
-            )}
-
-            {uploadMethod === "text" && (
-              <TextUpload sections={sections} onChange={setSections} />
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="mb-8">
-          <CardContent className="pt-8 pb-8">
-            <div className="text-center">
-              <Button
-                onClick={handleAnalyze}
-                disabled={isAnalyzeDisabled}
-                size="lg"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-12 py-4 text-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-              >
-                {processStatus === "uploading" ? (
-                  <>
-                    <Loader2 className="h-6 w-6 mr-3 animate-spin" />
-                    <span>Resume을 생성하고 있습니다...</span>
-                  </>
-                ) : processStatus === "reviewing" ? (
-                  <>
-                    <Loader2 className="h-6 w-6 mr-3 animate-spin" />
-                    <span>Resume을 분석하고 있습니다...</span>
-                  </>
-                ) : processStatus === "done" ? (
-                  <>
-                    <CheckCircle className="h-6 w-6 mr-3 text-green-600" />
-                    <span>Resume 생성이 완료되었습니다.</span>
-                  </>
-                ) : processStatus === "error" ? (
-                  <>
-                    <AlertCircle className="h-6 w-6 mr-3 text-red-600" />
-                    <span>오류가 발생했습니다. 다시 시도해주세요.</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-6 w-6 mr-3" /> 새 이력서 생성하기
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="h-6 w-6 text-blue-600" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">AI 분석</h3>
-              <p className="text-sm text-gray-600">
-                최신 AI 기술로 이력서를 분석하고 개선점을 제안합니다
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <FileText className="h-6 w-6 text-green-600" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">
-                맞춤형 피드백
-              </h3>
-              <p className="text-sm text-gray-600">
-                IT 업계 표준에 맞는 구체적인 개선 방향을 제시합니다
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-6 w-6 text-purple-600" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-2">즉시 결과</h3>
-              <p className="text-sm text-gray-600">
-                몇 분 내에 분석 결과와 개선된 이력서를 받아보세요
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -6,6 +6,7 @@ export interface ResumeItem {
   review?: string;
   oldText?: string;
   companyAddress?: string;
+  degree?: string;
 }
 
 export interface ResumeSession {

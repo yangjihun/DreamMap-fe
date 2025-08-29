@@ -3,8 +3,27 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Plus } from "lucide-react";
 
-const KEYWORDS = ['경력', '학력', '프로젝트', '수상', '인증', '활동', '경험', 'project', 'award'];
-const SKILL_KEYWORDS = ['기술', '스킬', '스택', 'skills'];
+const KEYWORDS = [
+  "경력",
+  "학력",
+  "프로젝트",
+  "수상",
+  "인증",
+  "활동",
+  "경험",
+  "project",
+  "award",
+];
+const SKILL_KEYWORDS = [
+  "기술",
+  "스킬",
+  "스택",
+  "skills",
+  "기본정보",
+  "기본 정보",
+  "certificate",
+];
+const EDUCATION_KEYWORDS = ["학력", "학교", "학과", "학사", "학위"];
 
 export type DraftItem = {
   id: string;
@@ -53,9 +72,7 @@ function uniqueKey(baseTitle: string, existing: string[]) {
 }
 
 const clean = (raw: string) =>
-  (raw ?? "")
-    .replace(/[\u200B-\u200D\uFEFF]/g, "")
-    .replace(/\u00A0/g, " ");
+  (raw ?? "").replace(/[\u200B-\u200D\uFEFF]/g, "").replace(/\u00A0/g, " ");
 
 const hasSkillKeyword = (title?: string) => {
   const t = (title ?? "").trim();
@@ -96,17 +113,25 @@ const ItemBlock: React.FC<{
   item: DraftItem;
   canRemove: boolean;
   isSkillSection: boolean;
+  sectionTitle: string;
   onChange: (id: string, patch: Partial<DraftItem>) => void;
   onRemove: (id: string) => void;
-}> = ({ item, canRemove, isSkillSection, onChange, onRemove }) => {
+}> = ({
+  item,
+  canRemove,
+  isSkillSection,
+  sectionTitle,
+  onChange,
+  onRemove,
+}) => {
   const composingRef = useRef(false);
 
   const showMeta = useMemo(() => {
     if (isSkillSection) return false;
-    const trimTitle = (item.title ?? "").trim();
-    if (!trimTitle) return false;
-    return KEYWORDS.some((k) => trimTitle.includes(k));
-  }, [item.title, isSkillSection]);
+    const trimSectionTitle = (sectionTitle ?? "").trim();
+    if (!trimSectionTitle) return false;
+    return KEYWORDS.some((k) => trimSectionTitle.includes(k));
+  }, [sectionTitle, isSkillSection]);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (isSkillSection) {
@@ -117,7 +142,9 @@ const ItemBlock: React.FC<{
     onChange(item.id, { title: nextTitle });
   };
 
-  const handleCompanyAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCompanyAddressChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     if (isSkillSection) {
       if (item.companyAddress !== "") onChange(item.id, { companyAddress: "" });
       return;
@@ -149,8 +176,9 @@ const ItemBlock: React.FC<{
       const { selectionStart, selectionEnd, value } = e.currentTarget;
       const before = value.substring(0, selectionStart);
       const after = value.substring(selectionEnd);
-      const currentLine = before.split('\n').pop() || "";
-      const shouldAddBullet = currentLine.trim() !== "" && currentLine.trim() !== "•";
+      const currentLine = before.split("\n").pop() || "";
+      const shouldAddBullet =
+        currentLine.trim() !== "" && currentLine.trim() !== "•";
       const insert = "\n" + (shouldAddBullet ? "• " : "");
       onChange(item.id, { text: before + insert + after });
     }
@@ -251,7 +279,9 @@ const ItemBlock: React.FC<{
         value={item.text}
         onChange={handleTextChange}
         onKeyDown={handleKeyDown}
-        onCompositionStart={() => { composingRef.current = true; }}
+        onCompositionStart={() => {
+          composingRef.current = true;
+        }}
         onCompositionEnd={(e) => {
           composingRef.current = false;
           const raw = clean(e.currentTarget.value);
@@ -365,7 +395,10 @@ const SectionCard: React.FC<{
               item={item}
               canRemove={section.items.length > 1 && !isSkillSection}
               isSkillSection={isSkillSection}
-              onChange={(itemId, patch) => onItemChange(section.id, itemId, patch)}
+              sectionTitle={section.title}
+              onChange={(itemId, patch) =>
+                onItemChange(section.id, itemId, patch)
+              }
               onRemove={(itemId) => onItemRemove(section.id, itemId)}
             />
           ))}
@@ -398,7 +431,8 @@ const TextUpload: React.FC<TextUploadProps> = ({ sections, onChange }) => {
         }
         return it;
       });
-      let nextSec: DraftSection = cleanedItems !== sec.items ? { ...sec, items: cleanedItems } : sec;
+      let nextSec: DraftSection =
+        cleanedItems !== sec.items ? { ...sec, items: cleanedItems } : sec;
       const normalized = normalizeSection(nextSec);
       if (normalized !== nextSec) dirty = true;
       return normalized;
@@ -444,7 +478,9 @@ const TextUpload: React.FC<TextUploadProps> = ({ sections, onChange }) => {
         if (s.id !== id) return s;
         const next: DraftSection = { ...s, ...patch };
         if (typeof patch.title === "string") {
-          const existingKeys = sections.filter((x) => x.id !== id).map((x) => x.key);
+          const existingKeys = sections
+            .filter((x) => x.id !== id)
+            .map((x) => x.key);
           next.key = uniqueKey(patch.title || "section", existingKeys);
         }
         return normalizeSection(next);

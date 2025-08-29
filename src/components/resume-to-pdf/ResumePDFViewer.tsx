@@ -58,6 +58,12 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     marginLeft: 8,
   },
+  itemMeta: {
+    fontSize: 9,
+    marginLeft: 8,
+    color: "#6B7280",
+    marginBottom: 2,
+  },
   divider: {
     borderBottomWidth: 1,
     borderBottomColor: "#000", // 얇은 solid 라인
@@ -82,18 +88,57 @@ export const ResumeDocument = ({ resume }: { resume: Resume }) => {
         <View style={styles.title}>
           <Text style={styles.title}>{resume.title}</Text>
         </View>
-        {resume.sessions.map((session: ResumeSession, sIdx: number) => (
-          <View key={sIdx} style={styles.session}>
-            <Text style={styles.sessionTitle}>{session.title}</Text>
-            <View style={styles.divider} />
-            {session.items.map((item: ResumeItem, iIdx: number) => (
-              <View key={iIdx} style={styles.item}>
-                <Text style={styles.itemTitle}>{item.title}</Text>
-                <Text style={styles.itemText}>{item.text}</Text>
-              </View>
-            ))}
-          </View>
-        ))}
+        {resume.sessions.map((session: ResumeSession, sIdx: number) =>
+          session.title === "Skills" ? (
+            // Skills section with "Name: Text" format
+            <View key={sIdx} style={styles.session}>
+              <Text style={styles.sessionTitle}>{session.title}</Text>
+              <View style={styles.divider} />
+              {session.items.map((item: ResumeItem, iIdx: number) => (
+                <View key={iIdx} style={styles.item}>
+                  <Text style={styles.itemText}>
+                    {item.title && `${item.title}: `}
+                    {item.text}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            // Regular sections with normal structure
+            <View key={sIdx} style={styles.session}>
+              <Text style={styles.sessionTitle}>{session.title}</Text>
+              <View style={styles.divider} />
+              {session.items.map((item: ResumeItem, iIdx: number) => (
+                <View key={iIdx} style={styles.item}>
+                  <Text style={styles.itemTitle}>{item.title}</Text>
+                  {item.companyAddress && (
+                    <Text style={styles.itemMeta}>
+                      {item.companyAddress}
+                      {item.startDate && (
+                        <>
+                          {" | "}
+                          {item.startDate}
+                          {item.endDate && item.startDate !== item.endDate && (
+                            <> ~ {item.endDate}</>
+                          )}
+                        </>
+                      )}
+                    </Text>
+                  )}
+                  {!item.companyAddress && item.startDate && (
+                    <Text style={styles.itemMeta}>
+                      {item.startDate}
+                      {item.endDate && item.startDate !== item.endDate && (
+                        <> ~ {item.endDate}</>
+                      )}
+                    </Text>
+                  )}
+                  <Text style={styles.itemText}>{item.text}</Text>
+                </View>
+              ))}
+            </View>
+          )
+        )}
       </Page>
     </Document>
   );

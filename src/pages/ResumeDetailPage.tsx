@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/ui/header";
+import { LoadingAnimation } from "@/components/ui/loading-animation";
 import {
   ArrowLeft,
   Save,
@@ -17,6 +18,7 @@ import {
   Plus,
   Pencil,
   Trash2,
+  CheckCircle,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
@@ -32,7 +34,17 @@ import type {
   ResumeItem,
 } from "@/types/resume";
 
-const KEYWORDS = ["경력", "학력", "프로젝트", "수상", "인증", "활동", "경험", "project", "award"];
+const KEYWORDS = [
+  "경력",
+  "학력",
+  "프로젝트",
+  "수상",
+  "인증",
+  "활동",
+  "경험",
+  "project",
+  "award",
+];
 const SKILL_KEYWORDS = ["기술", "스킬", "스택", "skills"];
 
 const uniqueSectionKey = (title: string, existing: string[]) => {
@@ -44,7 +56,11 @@ const uniqueSectionKey = (title: string, existing: string[]) => {
 };
 const formatDate = (d?: string) =>
   d
-    ? new Date(d).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })
+    ? new Date(d).toLocaleDateString("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
     : "-";
 const clean = (raw: string) =>
   (raw ?? "").replace(/[\u200B-\u200D\uFEFF]/g, "").replace(/\u00A0/g, " ");
@@ -61,6 +77,8 @@ const hasSkillKeyword = (title?: string) => {
 };
 
 function normalizeSkillSections(d: ResumeModel): ResumeModel {
+  if (!d || !d.sessions) return d;
+
   const copy = structuredClone(d);
   copy.sessions = copy.sessions.map((s) => {
     if (hasSkillKeyword(s.title)) {
@@ -126,7 +144,8 @@ function BulletTextarea({
           const before = value.substring(0, selectionStart);
           const after = value.substring(selectionEnd);
           const currentLine = before.split("\n").pop() || "";
-          const shouldAddBullet = currentLine.trim() !== "" && currentLine.trim() !== "•";
+          const shouldAddBullet =
+            currentLine.trim() !== "" && currentLine.trim() !== "•";
           const insert = "\n" + (shouldAddBullet ? "• " : "");
           onChange(before + insert + after);
         }
@@ -300,7 +319,9 @@ function ItemBlock({
             <div />
           )
         ) : (
-          <h4 className="font-medium text-gray-900">{showSkillMeta ? "" : item.title}</h4>
+          <h4 className="font-medium text-gray-900">
+            {showSkillMeta ? "" : item.title}
+          </h4>
         )}
         {isEdit && (
           <Button
@@ -329,11 +350,13 @@ function ItemBlock({
       {!showSkillMeta && (
         <div className="flex">
           {!isEdit && item.companyAddress && (
-            <p className="text-xs text-gray-500 mt-1 mr-1">{item.companyAddress}</p>
+            <p className="text-xs text-gray-500 mt-1 mr-1">
+              {item.companyAddress} |
+            </p>
           )}
           {!isEdit && item.startDate && item.endDate && (
-            <p className="text-xs text-gray-500 mt-1">
-              | {item.startDate} ~ {item.endDate}
+            <p className="text-xs text-gray-500 mt-1 mr-1">
+              {item.startDate} ~ {item.endDate}
             </p>
           )}
         </div>
@@ -347,7 +370,9 @@ function ItemBlock({
             className="w-full min-h-[96px] border-gray-400 shadow-sm placeholder:text-gray-400"
           />
         ) : (
-          <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{item.text}</p>
+          <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+            {item.text}
+          </p>
         )}
       </div>
 
@@ -439,12 +464,59 @@ export default function ResumeDetailPage() {
 
   if (loading && !draft) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-          <p className="text-gray-500">이력서를 불러오고 있습니다...</p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+        <Header />
+        <div className="flex flex-col items-center justify-center min-h-screen px-6">
+          <div className="text-center space-y-6">
+            {/* Loading Icon */}
+            <div className="relative">
+              <div className="w-20 h-20 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+              <div
+                className="absolute inset-0 w-20 h-20 border-4 border-transparent border-t-purple-600 rounded-full animate-spin"
+                style={{
+                  animationDirection: "reverse",
+                  animationDuration: "1.5s",
+                }}
+              ></div>
+            </div>
+
+            {/* Loading Text */}
+            <div className="space-y-2">
+              <h2 className="text-2xl font-semibold text-gray-800">
+                이력서를 불러오고 있습니다
+              </h2>
+              <p className="text-gray-600">잠시만 기다려주세요...</p>
+            </div>
+
+            {/* Loading Dots */}
+            <div className="flex justify-center space-x-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+              <div
+                className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                style={{ animationDelay: "0.1s" }}
+              ></div>
+              <div
+                className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                style={{ animationDelay: "0.2s" }}
+              ></div>
+            </div>
+          </div>
         </div>
       </div>
+    );
+  }
+
+  if (isReviewing) {
+    return (
+      <>
+        <Header />
+        <LoadingAnimation
+          title="AI 분석 중입니다"
+          description="이력서를 분석하고 개선점을 찾아내고 있어요. 잠시만 기다려주세요!"
+          progress={60}
+          variant="analysis"
+        />
+      </>
     );
   }
 
@@ -453,7 +525,9 @@ export default function ResumeDetailPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">이력서를 찾을 수 없습니다</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            이력서를 찾을 수 없습니다
+          </h2>
           <Button onClick={() => navigate("/dashboard")} variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" /> 돌아가기
           </Button>
@@ -463,7 +537,12 @@ export default function ResumeDetailPage() {
   }
 
   const cancelEdit = () => {
-    if (!window.confirm("편집된 내용을 모두 삭제할까요? 저장하지 않은 변경사항이 사라집니다.")) return;
+    if (
+      !window.confirm(
+        "편집된 내용을 모두 삭제할까요? 저장하지 않은 변경사항이 사라집니다."
+      )
+    )
+      return;
     if (resume) setDraft(normalizeSkillSections(resume));
     dispatch(setIsEdit(false));
     setAddingKey(null);
@@ -513,10 +592,21 @@ export default function ResumeDetailPage() {
                 </Button>
               ) : (
                 <div className="flex items-center gap-2">
-                  <Button onClick={cancelEdit} variant="outline" size="sm" className="border-gray-200">
+                  <Button
+                    onClick={cancelEdit}
+                    variant="outline"
+                    size="sm"
+                    className="border-gray-200"
+                  >
                     <ArrowLeft className="h-4 w-4 mr-2" /> 편집 취소
                   </Button>
-                  <Button onClick={saveAll} variant="outline" disabled={loading} size="sm" className="border-gray-200">
+                  <Button
+                    onClick={saveAll}
+                    variant="outline"
+                    disabled={loading}
+                    size="sm"
+                    className="border-gray-200"
+                  >
                     <Save className="h-4 w-4 mr-2" /> 저장
                   </Button>
                 </div>
@@ -537,15 +627,33 @@ export default function ResumeDetailPage() {
                 placeholder="이력서 제목"
               />
             ) : (
-              <h1 className="text-2xl font-bold text-gray-900">{draft.title}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {draft.title}
+              </h1>
             )}
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Info icon={<Calendar className="h-4 w-4 text-gray-500" />} label="마지막 수정" value={formatDate(draft.updatedAt)} />
-              <Info icon={<Hash className="h-4 w-4 text-gray-500" />} label="총 글자 수" value={`${totalChars.toLocaleString()}자`} />
-              <Info icon={<TrendingUp className="h-4 w-4 text-gray-500" />} label="AI 점수" value={`${draft.score}점`} />
-              <Info icon={<FileText className="h-4 w-4 text-gray-500" />} label="섹션 수" value={`${draft.sessions.length}`} />
+              <Info
+                icon={<Calendar className="h-4 w-4 text-gray-500" />}
+                label="마지막 수정"
+                value={formatDate(draft.updatedAt)}
+              />
+              <Info
+                icon={<Hash className="h-4 w-4 text-gray-500" />}
+                label="총 글자 수"
+                value={`${totalChars.toLocaleString()}자`}
+              />
+              <Info
+                icon={<TrendingUp className="h-4 w-4 text-gray-500" />}
+                label="AI 점수"
+                value={`${draft.score}점`}
+              />
+              <Info
+                icon={<FileText className="h-4 w-4 text-gray-500" />}
+                label="섹션 수"
+                value={`${draft.sessions.length}`}
+              />
             </div>
           </CardContent>
         </Card>
@@ -568,7 +676,10 @@ export default function ResumeDetailPage() {
                         onClick={() => {
                           if (!sectionTitle.trim()) return;
                           updateDraft((d) => {
-                            const key = uniqueSectionKey(sectionTitle, d.sessions.map((s) => s.key));
+                            const key = uniqueSectionKey(
+                              sectionTitle,
+                              d.sessions.map((s) => s.key)
+                            );
                             const isSkill = hasSkillKeyword(sectionTitle);
                             const newSession: ResumeSessionModel = {
                               key,
@@ -589,7 +700,8 @@ export default function ResumeDetailPage() {
                               ];
                             } else {
                               const hasFirstItem =
-                                sectionItemTitle.trim() !== "" || sectionItemText.trim() !== "";
+                                sectionItemTitle.trim() !== "" ||
+                                sectionItemText.trim() !== "";
                               if (hasFirstItem) {
                                 newSession.items.push({
                                   title: sectionItemTitle.trim() || "새 항목",
@@ -664,7 +776,11 @@ export default function ResumeDetailPage() {
                   </div>
                 </div>
               ) : (
-                <Button variant="outline" onClick={() => setAddSectionOpen(true)} className="border-gray-200">
+                <Button
+                  variant="outline"
+                  onClick={() => setAddSectionOpen(true)}
+                  className="border-gray-200"
+                >
                   <Plus className="h-4 w-4 mr-2" /> 섹션 추가
                 </Button>
               )}
@@ -703,7 +819,9 @@ export default function ResumeDetailPage() {
                   onRemove={() => {
                     if (!confirm("이 섹션을 삭제할까요?")) return;
                     updateDraft((d) => {
-                      d.sessions = d.sessions.filter((s) => s.key !== session.key);
+                      d.sessions = d.sessions.filter(
+                        (s) => s.key !== session.key
+                      );
                     });
                   }}
                 />
@@ -711,7 +829,9 @@ export default function ResumeDetailPage() {
                 <CardContent className="pt-0">
                   <div className="space-y-4">
                     {session.items.length === 0 && !isEdit ? (
-                      <div className="text-center py-10 text-gray-500">아직 추가된 항목이 없습니다.</div>
+                      <div className="text-center py-10 text-gray-500">
+                        아직 추가된 항목이 없습니다.
+                      </div>
                     ) : (
                       <>
                         <div className="space-y-3">
@@ -723,38 +843,51 @@ export default function ResumeDetailPage() {
                               item={item}
                               onChangeText={(v) =>
                                 updateDraft((d) => {
-                                  const s = d.sessions.find((x) => x.key === session.key);
+                                  const s = d.sessions.find(
+                                    (x) => x.key === session.key
+                                  );
                                   if (s?.items[idx]) s.items[idx].text = v;
                                 })
                               }
                               onChangeTitle={(v) =>
                                 updateDraft((d) => {
-                                  const s = d.sessions.find((x) => x.key === session.key);
+                                  const s = d.sessions.find(
+                                    (x) => x.key === session.key
+                                  );
                                   if (s?.items[idx]) s.items[idx].title = v;
                                 })
                               }
                               onChangeCompanyAddress={(v) =>
                                 updateDraft((d) => {
-                                  const s = d.sessions.find((x) => x.key === session.key);
-                                  if (s?.items[idx]) s.items[idx].companyAddress = v;
+                                  const s = d.sessions.find(
+                                    (x) => x.key === session.key
+                                  );
+                                  if (s?.items[idx])
+                                    s.items[idx].companyAddress = v;
                                 })
                               }
                               onChangeStartDate={(v) =>
                                 updateDraft((d) => {
-                                  const s = d.sessions.find((x) => x.key === session.key);
+                                  const s = d.sessions.find(
+                                    (x) => x.key === session.key
+                                  );
                                   if (s?.items[idx]) s.items[idx].startDate = v;
                                 })
                               }
                               onChangeEndDate={(v) =>
                                 updateDraft((d) => {
-                                  const s = d.sessions.find((x) => x.key === session.key);
+                                  const s = d.sessions.find(
+                                    (x) => x.key === session.key
+                                  );
                                   if (s?.items[idx]) s.items[idx].endDate = v;
                                 })
                               }
                               onRemove={() => {
                                 if (!confirm("이 항목을 삭제할까요?")) return;
                                 updateDraft((d) => {
-                                  const s = d.sessions.find((x) => x.key === session.key);
+                                  const s = d.sessions.find(
+                                    (x) => x.key === session.key
+                                  );
                                   if (!s) return;
                                   s.items.splice(idx, 1);
                                 });
@@ -813,7 +946,9 @@ export default function ResumeDetailPage() {
                                     onClick={() => {
                                       if (!newText.trim()) return;
                                       updateDraft((d) => {
-                                        const s = d.sessions.find((x) => x.key === session.key);
+                                        const s = d.sessions.find(
+                                          (x) => x.key === session.key
+                                        );
                                         if (!s) return;
 
                                         if (hasSkillKeyword(s.title)) {
@@ -830,7 +965,8 @@ export default function ResumeDetailPage() {
                                           s.items.push({
                                             title: newTitle.trim() || "새 항목",
                                             text: newText.trim(),
-                                            companyAddress: newCompanyAddress.trim(),
+                                            companyAddress:
+                                              newCompanyAddress.trim(),
                                             startDate: newStartDate,
                                             endDate: newEndDate,
                                           });
@@ -856,7 +992,8 @@ export default function ResumeDetailPage() {
                                 className="w-full border-gray-200"
                                 onClick={() => setAddingKey(session.key)}
                               >
-                                <Plus className="h-4 w-4 mr-2" /> 새 항목 추가하기
+                                <Plus className="h-4 w-4 mr-2" /> 새 항목
+                                추가하기
                               </Button>
                             )
                           ))}
@@ -884,7 +1021,12 @@ export default function ResumeDetailPage() {
             >
               이전 분석 보러가기
             </Button>
-            <Button variant="default" onClick={handleNewReview} className="border-gray-200" disabled={isReviewing}>
+            <Button
+              variant="default"
+              onClick={handleNewReview}
+              className="border-gray-200"
+              disabled={isReviewing}
+            >
               {isReviewing ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -917,7 +1059,9 @@ function Info({
     <div className="flex items-start gap-2 rounded-lg bg-gray-50 px-3 py-2 ring-1 ring-gray-100">
       <div className="mt-0.5">{icon}</div>
       <div>
-        <p className="text-[11px] uppercase tracking-wide text-gray-500">{label}</p>
+        <p className="text-[11px] uppercase tracking-wide text-gray-500">
+          {label}
+        </p>
         <p className="text-sm font-medium text-gray-900">{value}</p>
       </div>
     </div>

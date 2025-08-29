@@ -92,7 +92,6 @@ export default function Header() {
                 >
                   <div className="flex items-center justify-start gap-3 p-4">
                     <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium text-gray-800">{user?.name}</p>
                       <p className="w-[200px] truncate text-sm text-gray-600">
                         {user?.email}
                       </p>
