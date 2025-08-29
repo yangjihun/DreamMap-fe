@@ -41,6 +41,10 @@ interface AuthResponse {
   token: string;
 }
 
+interface UserResponse {
+  user: User;
+}
+
 // --- 초기 상태 ---
 
 // 앱이 처음 로드될 때의 인증 상태를 정의
@@ -92,11 +96,11 @@ export const signup = createAsyncThunk<AuthResponse, SignupPayload, { rejectValu
   }
 );
 
-export const loginWithToken = createAsyncThunk<User, void, { rejectValue: AuthError }>(
+export const loginWithToken = createAsyncThunk<UserResponse, void, { rejectValue: AuthError }>(
   "auth/loginWithToken",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get<User>("/user/me");
+      const response = await api.get<UserResponse>("/user/me");
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error ?? { message: "유효하지 않은 토큰입니다." });
@@ -115,7 +119,6 @@ export const authSlice = createSlice({
     setUser: (state, action: PayloadAction<{ user: User | null; token: string | null }>) => {   //null 추가 후 실험
       state.user = action.payload.user;
       state.token = action.payload.token;
-      // 👇 이 부분을 수정합니다.
       if (action.payload.token) {
         // 토큰이 문자열 값일 경우, 세션 스토리지에 저장합니다.
         sessionStorage.setItem("token", action.payload.token);
@@ -174,11 +177,11 @@ export const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(loginWithToken.fulfilled, (state, action: PayloadAction<User>) => {
+      .addCase(loginWithToken.fulfilled, (state, action: PayloadAction<UserResponse>) => {
         // 요청 성공 시 (토큰이 유효함)
         state.isLoading = false;
         state.isAuthenticated = true; // 인증 상태를 true로 변경합니다.
-        state.user = action.payload;  // 서버로부터 받은 사용자 정보를 저장합니다.
+        state.user = action.payload.user;  // 서버로부터 받은 사용자 정보를 저장합니다.
         // state.token은 변경할 필요가 없습니다. 
         // 이 thunk가 성공했다는 것 자체가 이미 state에 있던 토큰이 유효하다는 의미이기 때문입니다.
       })
