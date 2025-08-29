@@ -23,6 +23,7 @@ import {
   createNewResumeFromFile,
   createNewResumeWithSections,
   getAiReview,
+  getResumeFromAI,
   setHasFeedbackResume,
 } from "@/redux/slices/resumeSlice";
 import FileUpload from "@/components/fileUpload";
@@ -31,6 +32,7 @@ import TextUpload, {
   hasRealContent,
 } from "@/components/textUpload";
 type UploadMethod = "file" | "text";
+type TextInputMethod = "paste" | "write";
 type ProcessStatus = "idle" | "uploading" | "reviewing" | "done" | "error";
 
 function slugify(raw: string) {
@@ -47,8 +49,11 @@ function slugify(raw: string) {
 
 const UploadPage: React.FC = () => {
   const [uploadMethod, setUploadMethod] = useState<UploadMethod>("file");
+  const [textInputMethod, setTextInputMethod] =
+    useState<TextInputMethod>("write");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [resumeTitle, setResumeTitle] = useState("");
+  const [fullText, setFullText] = useState("");
   const [processStatus, setProcessStatus] = useState<ProcessStatus>("idle");
   const [sections, setSections] = useState<DraftSection[]>([
     {
@@ -84,19 +89,33 @@ const UploadPage: React.FC = () => {
     if (loading) return true;
     if (!resumeTitle.trim()) return true;
     if (uploadMethod === "text") {
-      return (
-        !sections.every(
-          (s) =>
-            s.title.trim() &&
-            s.items.length > 0 &&
-            s.items.every(
-              (item) => hasRealContent(item.text) && item.title.trim()
-            )
-        ) || sections.length === 0
-      );
+      if (textInputMethod === "paste") {
+        // For paste mode, just check if there's any text content
+        return !fullText.trim();
+      } else {
+        // For write mode, check sections and items
+        return (
+          !sections.every(
+            (s) =>
+              s.title.trim() &&
+              s.items.length > 0 &&
+              s.items.every(
+                (item) => hasRealContent(item.text) && item.title.trim()
+              )
+          ) || sections.length === 0
+        );
+      }
     }
     return !selectedFile;
-  }, [loading, resumeTitle, uploadMethod, sections, selectedFile]);
+  }, [
+    loading,
+    resumeTitle,
+    uploadMethod,
+    textInputMethod,
+    fullText,
+    sections,
+    selectedFile,
+  ]);
 
   const handleAnalyze = useCallback(async () => {
     try {
@@ -107,61 +126,79 @@ const UploadPage: React.FC = () => {
 
       setProcessStatus("uploading");
       if (uploadMethod === "text") {
-        const validSections = sections.filter(
-          (s) =>
-            s.title.trim().length > 0 &&
-            s.items.some(
-              (item) =>
-                hasRealContent(item.text) && item.title.trim().length > 0
-            )
-        );
-        if (validSections.length === 0) {
-          window.alert("적어도 하나의 섹션에 제목과 내용을 입력해주세요.");
-          return;
-        }
-        const payloadSections: Record<
-          string,
-          {
-            title: string;
-            items: Array<{
-              title: string;
-              text: string;
-              startDate?: string;
-              endDate?: string;
-              companyAddress?: string;
-            }>;
+        if (textInputMethod === "paste") {
+          // Handle full text paste
+          if (!fullText.trim()) {
+            window.alert("이력서 텍스트를 입력해주세요.");
+            return;
           }
-        > = {};
-        validSections.forEach((s) => {
-          const key = s.key || slugify(s.title || "section");
-          const validItems = s.items
-            .filter((item) => hasRealContent(item.text))
-            .map((item) => ({
-              title: item.title.trim() || "새 항목",
-              text: item.text.trim(),
-              startDate: item.startDate || undefined,
-              endDate: item.endDate || undefined,
-              companyAddress: item.companyAddress || undefined,
-            }));
 
-          payloadSections[key] = {
-            title: s.title.trim(),
-            items: validItems,
-          };
-        });
+          // Create a simple section structure from the full text
+          const result = await dispatch(getResumeFromAI(fullText)).unwrap();
 
-        const result = await dispatch(
-          createNewResumeWithSections({
-            resumeTitle: resumeTitle.trim(),
-            sections: payloadSections,
-          })
-        ).unwrap();
+          setProcessStatus("reviewing");
+          await dispatch(getAiReview(result.id));
+          dispatch(setHasFeedbackResume(false));
+          setProcessStatus("done");
+          if (result?.id) navigate(`/analysis/${result.id}`);
+        } else {
+          // Handle item-by-item writing (existing logic)
+          const validSections = sections.filter(
+            (s) =>
+              s.title.trim().length > 0 &&
+              s.items.some(
+                (item) =>
+                  hasRealContent(item.text) && item.title.trim().length > 0
+              )
+          );
+          if (validSections.length === 0) {
+            window.alert("적어도 하나의 섹션에 제목과 내용을 입력해주세요.");
+            return;
+          }
+          const payloadSections: Record<
+            string,
+            {
+              title: string;
+              items: Array<{
+                title: string;
+                text: string;
+                startDate?: string;
+                endDate?: string;
+                companyAddress?: string;
+              }>;
+            }
+          > = {};
+          validSections.forEach((s) => {
+            const key = s.key || slugify(s.title || "section");
+            const validItems = s.items
+              .filter((item) => hasRealContent(item.text))
+              .map((item) => ({
+                title: item.title.trim() || "새 항목",
+                text: item.text.trim(),
+                startDate: item.startDate || undefined,
+                endDate: item.endDate || undefined,
+                companyAddress: item.companyAddress || undefined,
+              }));
 
-        setProcessStatus("reviewing");
-        await dispatch(getAiReview(result.id));
-        dispatch(setHasFeedbackResume(false));
-        setProcessStatus("done");
-        if (result?.id) navigate(`/analysis/${result.id}`);
+            payloadSections[key] = {
+              title: s.title.trim(),
+              items: validItems,
+            };
+          });
+
+          const result = await dispatch(
+            createNewResumeWithSections({
+              resumeTitle: resumeTitle.trim(),
+              sections: payloadSections,
+            })
+          ).unwrap();
+
+          setProcessStatus("reviewing");
+          await dispatch(getAiReview(result.id));
+          dispatch(setHasFeedbackResume(false));
+          setProcessStatus("done");
+          if (result?.id) navigate(`/analysis/${result.id}`);
+        }
       } else {
         if (!selectedFile) {
           window.alert("파일을 선택해주세요.");
@@ -192,7 +229,16 @@ const UploadPage: React.FC = () => {
       window.alert(msg);
       console.error("Resume 생성 중 오류:", err);
     }
-  }, [dispatch, navigate, resumeTitle, sections, selectedFile, uploadMethod]);
+  }, [
+    dispatch,
+    navigate,
+    resumeTitle,
+    sections,
+    selectedFile,
+    uploadMethod,
+    textInputMethod,
+    fullText,
+  ]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -286,7 +332,72 @@ const UploadPage: React.FC = () => {
               )}
 
               {uploadMethod === "text" && (
-                <TextUpload sections={sections} onChange={setSections} />
+                <>
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      텍스트 입력 방법
+                    </label>
+                    <div className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg">
+                      <button
+                        type="button"
+                        aria-pressed={textInputMethod === "paste"}
+                        onClick={() => setTextInputMethod("paste")}
+                        className={`flex items-center justify-center py-3 px-6 rounded-md transition-all duration-200 ${
+                          textInputMethod === "paste"
+                            ? "bg-white text-blue-600 shadow-sm"
+                            : ""
+                        }`}
+                      >
+                        전체 텍스트 붙여넣기
+                      </button>
+                      <button
+                        type="button"
+                        aria-pressed={textInputMethod === "write"}
+                        onClick={() => setTextInputMethod("write")}
+                        className={`flex items-center justify-center py-3 px-6 rounded-md transition-all duration-200 ${
+                          textInputMethod === "write"
+                            ? "bg-white text-blue-600 shadow-sm"
+                            : ""
+                        }`}
+                      >
+                        항목별로 적어넣기
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2">
+                      {textInputMethod === "paste"
+                        ? "긴 텍스트나 복사된 이력서를 한 번에 붙여넣을 때 사용하세요"
+                        : "섹션별로 세분화하여 이력서를 작성할 때 사용하세요"}
+                    </p>
+                  </div>
+
+                  {textInputMethod === "paste" ? (
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                        이력서 전체 텍스트
+                      </label>
+                      <textarea
+                        placeholder="이력서 전체 텍스트를 여기에 붙여넣으세요..."
+                        value={fullText}
+                        onChange={(e) => setFullText(e.target.value)}
+                        className="border-2 border-gray-200 bg-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 px-3 py-2 rounded-md w-full min-h-[200px] resize-none"
+                      />
+                      <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
+                        <span>문자수: {fullText.length}자</span>
+                        <span
+                          className={
+                            fullText.length > 1000
+                              ? "text-blue-600 font-medium"
+                              : ""
+                          }
+                        >
+                          {fullText.length > 1000 ? "✓ 긴 텍스트 감지됨" : ""}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <TextUpload sections={sections} onChange={setSections} />
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
