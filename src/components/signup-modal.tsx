@@ -400,7 +400,7 @@ export default function SignupModal({
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div>
             <CardTitle className="text-xl font-semibold">
-              {steps[currentStep].title}
+              {useStepSignup ? steps[currentStep].title : "회원가입"}
             </CardTitle>
             <p className="text-sm text-gray-600 mt-1">
               {steps[currentStep].description}
