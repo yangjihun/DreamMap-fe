@@ -17,6 +17,7 @@ import {
   Plus,
   Pencil,
   Trash2,
+  Divide,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
@@ -33,7 +34,7 @@ import type {
 } from "@/types/resume";
 
 const KEYWORDS = ["경력", "학력", "프로젝트", "수상", "인증", "활동", "경험", "project", "award"];
-//const SKILL_KEYWORDS = ["기술", "스킬", "스택" ,"skills"]
+const SKILL_KEYWORDS = ["기술", "스킬", "스택" ,"skills"]
 
 const uniqueSectionKey = (title: string, existing: string[]) => {
   const base = title.trim();
@@ -53,6 +54,12 @@ const hasKeyword = (title?: string) => {
   if (!t) return false;
   return KEYWORDS.some((k) => t.includes(k));
 };
+
+const hasSkillKeyword = (title?: string) => {
+  const t = (title ?? "").trim();
+  if (!t) return false;
+  return SKILL_KEYWORDS.some((k) => t.includes(k));
+}
 
 function BulletTextarea({
   value,
@@ -229,6 +236,7 @@ function SectionHeader({
 function ItemBlock({
   isEdit,
   item,
+  sessionTitle,
   onChangeText,
   onChangeTitle,
   onChangeCompanyAddress,
@@ -238,6 +246,7 @@ function ItemBlock({
 }: {
   isEdit: boolean;
   item: ResumeItem;
+  sessionTitle: string;
   onChangeText: (v: string) => void;
   onChangeTitle: (v: string) => void;
   onChangeCompanyAddress: (v: string) => void;
@@ -246,6 +255,7 @@ function ItemBlock({
   onRemove: () => void;
 }) {
   const showMeta = hasKeyword(item.title);
+  const showSkillMeta = hasSkillKeyword(sessionTitle);
   return (
     <div
       className={[
@@ -256,13 +266,14 @@ function ItemBlock({
       ].join(" ")}
     >
       <div className="flex items-center justify-between gap-2">
-        {isEdit ? (
+        {isEdit ? (!showSkillMeta ? (
+          
           <Input
             value={item.title}
             onChange={(e) => onChangeTitle(e.target.value)}
             className="font-medium h-10 w-[min(28rem,90vw)] placeholder:text-gray-400 border-gray-400 shadow-sm"
             placeholder="항목 제목"
-          />
+          />) : (<div></div>)
         ) : (
           <h4 className="font-medium text-gray-900">{item.title}</h4>
         )}
@@ -278,7 +289,7 @@ function ItemBlock({
           </Button>
         )}
       </div>
-      {isEdit && showMeta && (
+      {isEdit && showMeta && !showSkillMeta && (
         <ItemMetaFields
           companyAddress={item.companyAddress || ""}
           startDate={item.startDate || ""}
@@ -345,6 +356,8 @@ export default function ResumeDetailPage() {
   const [newEndDate, setNewEndDate] = useState("");
 
   const [isReviewing, setIsReviewing] = useState(false);
+
+  
 
   useEffect(() => {
     if (id) dispatch(getResume(id));
@@ -504,8 +517,8 @@ export default function ResumeDetailPage() {
         </Card>
 
         {isEdit && (
-          <Card className="mb-2 border-white shadow-sm">
-            <CardContent className="pt-6">
+          <Card className="mb-2 border-gray-300 shadow-sm">
+            <CardContent className="pt-0">
               {addSectionOpen ? (
                 <div className="space-y-4">
                   <div className="flex flex-col sm:flex-row gap-2">
@@ -572,12 +585,14 @@ export default function ResumeDetailPage() {
 
                   <div className="rounded-xl ring-1 ring-dashed ring-gray-300 p-4 bg-gray-50/60">
                     <div className="space-y-3">
+                      {!hasSkillKeyword(sectionTitle) && (
                       <Input
                         placeholder="항목 제목"
                         value={sectionItemTitle}
                         onChange={(e) => setSectionItemTitle(e.target.value)}
                         className="font-medium h-10 placeholder:text-gray-400 border-gray-400 shadow-sm"
                       />
+                      )}
                       {hasKeyword(sectionItemTitle) && (
                         <ItemMetaFields
                           companyAddress={sectionCompanyAddress}
@@ -609,7 +624,9 @@ export default function ResumeDetailPage() {
         )}
 
         <div className="space-y-6">
-          {draft.sessions.map((session) => (
+          {draft.sessions.map((session) => {
+            const isSkillSection = hasSkillKeyword(session.title)
+            return(
             <Card key={session.key} className="border-gray-300 shadow-sm">
               <SectionHeader
                 isEdit={isEdit}
@@ -639,6 +656,7 @@ export default function ResumeDetailPage() {
                           <ItemBlock
                             key={idx}
                             isEdit={isEdit}
+                            sessionTitle={session.title}
                             item={item}
                             onChangeText={(v) =>
                               updateDraft((d) => {
@@ -686,6 +704,7 @@ export default function ResumeDetailPage() {
                         (addingKey === session.key ? (
                           <div className="rounded-xl ring-1 ring-dashed ring-gray-300 p-4 bg-gray-50/60">
                             <div className="space-y-3">
+                              
                               <Input
                                 placeholder="항목 제목"
                                 value={newTitle}
@@ -755,7 +774,7 @@ export default function ResumeDetailPage() {
                               </div>
                             </div>
                           </div>
-                        ) : (
+                        ) : (!isSkillSection && (
                           <Button
                             variant="outline"
                             className="w-full border-gray-200"
@@ -763,13 +782,14 @@ export default function ResumeDetailPage() {
                           >
                             <Plus className="h-4 w-4 mr-2" /> 새 항목 추가하기
                           </Button>
-                        ))}
+                        )))}
                     </>
                   )}
                 </div>
               </CardContent>
             </Card>
-          ))}
+          )}
+          )}
         </div>
 
         {!isEdit && (
