@@ -15,7 +15,8 @@ import SignupModal from "../components/signup-modal";
 import type { SignupData } from "@/components/signup-modal";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
-import { Eye, EyeOff, Lock, Mail, Sparkles } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, Sparkles, ArrowLeft } from "lucide-react";
+import Header from "@/components/ui/header";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -92,12 +93,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 relative">
-      {/* Simple Background Pattern */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-100/20 to-purple-100/20" />
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_1px_1px,rgba(59,130,246,0.1)_1px,transparent_0)] bg-[length:24px_24px]" />
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+
+      {/* Back to Main Page Button - Top Left */}
 
       <div className="relative flex items-center justify-center min-h-screen p-4">
         <div className="max-w-md w-full space-y-8">
@@ -116,6 +115,19 @@ export default function LoginPage() {
 
           <Card>
             <CardHeader className="text-center pb-4">
+              <div className="flex items-center justify-between mb-4">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+                  onClick={() => navigate("/")}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                  메인으로
+                </Button>
+                <div className="flex-1"></div>
+              </div>
               <CardTitle className="text-xl">로그인</CardTitle>
               <p className="text-sm text-gray-600">
                 계정에 로그인하여 시작하세요
@@ -189,10 +201,10 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+                  className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"
+                  disabled={isLoading}
                 >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  로그인
+                  {isLoading ? "로그인 중..." : "로그인"}
                 </Button>
 
                 <div className="text-center space-y-3">
