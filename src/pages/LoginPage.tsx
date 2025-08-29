@@ -34,7 +34,7 @@ export default function LoginPage() {
   useEffect(() => {
     //특별한 공용 페이지  로그인 페이지로 이동하는 것 막기 위함
     if (isAuthenticated && !isLoading) {
-      navigate("/dashboard");
+      navigate("/");
     }
   }, [isAuthenticated, isLoading, navigate]);
 
@@ -45,8 +45,8 @@ export default function LoginPage() {
       // 1. 입력된 이메일과 비밀번호로 login thunk를 디스패치합니다.
       await dispatch(login({ email, password })).unwrap();
 
-      // 2. unwrap()이 성공적으로 완료되면 (로그인 성공 시) 대시보드로 이동합니다.
-      navigate("/dashboard");
+      // 2. unwrap()이 성공적으로 완료되면 (로그인 성공 시) 메인페이지로 이동합니다.
+      navigate("/");
     } catch (error: any) {
       // 3. unwrap()이 에러를 던지면 (로그인 실패 시) 에러를 처리합니다.
 
@@ -78,8 +78,8 @@ export default function LoginPage() {
       // signup thunk를 디스패치하고 결과를 unwrap
       await dispatch(signup(backendPayload)).unwrap();
 
-      // 회원가입 성공 후 대시보드로 이동
-      navigate("/dashboard");
+      // 회원가입 성공 후 메인페이지로 이동
+      navigate("/");
     } catch (error: any) {
       console.error("회원가입 실패:", error);
       // 필요하다면 사용자에게 에러 메시지를 표시
@@ -104,14 +104,14 @@ export default function LoginPage() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Sparkles className="w-7 h-7 text-white" />
+              <div className="w-12 h-12 flex items-center justify-center">
+                <Sparkles className="w-7 h-7 text-blue-600" />
               </div>
               <span className="text-2xl font-medium text-gray-900">
                 미래지도
               </span>
             </div>
-            <p className="text-gray-600">AI 맞춤형 커리어 성장의 시작</p>
+            <p className="text-gray-600">AI 분석으로 완성하는 완벽한 이력서</p>
           </div>
 
           <Card>
