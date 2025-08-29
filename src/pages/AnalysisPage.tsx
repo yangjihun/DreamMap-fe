@@ -209,7 +209,7 @@ export default function AnalysisPage() {
         <div className="flex items-center gap-3 mb-8">
           <Button variant="outline" onClick={goToEdit} className="mr-3">
             <Pencil className="w-4 h-4 mr-1" />
-            이력서 수정
+            이력서 편집
           </Button>
           {!hasFeedbackResume ? (
             <Button
