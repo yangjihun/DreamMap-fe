@@ -17,7 +17,6 @@ import {
   Plus,
   Pencil,
   Trash2,
-  Divide,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
@@ -34,7 +33,7 @@ import type {
 } from "@/types/resume";
 
 const KEYWORDS = ["경력", "학력", "프로젝트", "수상", "인증", "활동", "경험", "project", "award"];
-const SKILL_KEYWORDS = ["기술", "스킬", "스택" ,"skills"]
+const SKILL_KEYWORDS = ["기술", "스킬", "스택", "skills"];
 
 const uniqueSectionKey = (title: string, existing: string[]) => {
   const base = title.trim();
@@ -59,6 +58,29 @@ const hasSkillKeyword = (title?: string) => {
   const t = (title ?? "").trim();
   if (!t) return false;
   return SKILL_KEYWORDS.some((k) => t.includes(k));
+};
+
+function normalizeSkillSections(d: ResumeModel): ResumeModel {
+  const copy = structuredClone(d);
+  copy.sessions = copy.sessions.map((s) => {
+    if (hasSkillKeyword(s.title)) {
+      const first = s.items?.[0] ?? { text: "" };
+      return {
+        ...s,
+        items: [
+          {
+            title: "",
+            text: first.text ?? "",
+            companyAddress: "",
+            startDate: "",
+            endDate: "",
+          },
+        ],
+      };
+    }
+    return s;
+  });
+  return copy;
 }
 
 function BulletTextarea({
@@ -266,16 +288,19 @@ function ItemBlock({
       ].join(" ")}
     >
       <div className="flex items-center justify-between gap-2">
-        {isEdit ? (!showSkillMeta ? (
-          
-          <Input
-            value={item.title}
-            onChange={(e) => onChangeTitle(e.target.value)}
-            className="font-medium h-10 w-[min(28rem,90vw)] placeholder:text-gray-400 border-gray-400 shadow-sm"
-            placeholder="항목 제목"
-          />) : (<div></div>)
+        {isEdit ? (
+          !showSkillMeta ? (
+            <Input
+              value={item.title}
+              onChange={(e) => onChangeTitle(e.target.value)}
+              className="font-medium h-10 w-[min(28rem,90vw)] placeholder:text-gray-400 border-gray-400 shadow-sm"
+              placeholder="항목 제목"
+            />
+          ) : (
+            <div />
+          )
         ) : (
-          <h4 className="font-medium text-gray-900">{item.title}</h4>
+          <h4 className="font-medium text-gray-900">{showSkillMeta ? "" : item.title}</h4>
         )}
         {isEdit && (
           <Button
@@ -289,6 +314,7 @@ function ItemBlock({
           </Button>
         )}
       </div>
+
       {isEdit && showMeta && !showSkillMeta && (
         <ItemMetaFields
           companyAddress={item.companyAddress || ""}
@@ -299,16 +325,20 @@ function ItemBlock({
           onEndDate={onChangeEndDate}
         />
       )}
-      <div className="flex ">
-        {!isEdit && item.companyAddress && (
-          <p className="text-xs text-gray-500 mt-1 mr-1">{item.companyAddress}</p>
-        )}
-        {!isEdit && item.startDate && item.endDate && (
-          <p className="text-xs text-gray-500 mt-1">
-            | {item.startDate} ~ {item.endDate}
-          </p>
-        )}
-      </div>
+
+      {!showSkillMeta && (
+        <div className="flex">
+          {!isEdit && item.companyAddress && (
+            <p className="text-xs text-gray-500 mt-1 mr-1">{item.companyAddress}</p>
+          )}
+          {!isEdit && item.startDate && item.endDate && (
+            <p className="text-xs text-gray-500 mt-1">
+              | {item.startDate} ~ {item.endDate}
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="mt-3">
         {isEdit ? (
           <BulletTextarea
@@ -317,11 +347,10 @@ function ItemBlock({
             className="w-full min-h-[96px] border-gray-400 shadow-sm placeholder:text-gray-400"
           />
         ) : (
-          <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-            {item.text}
-          </p>
+          <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{item.text}</p>
         )}
       </div>
+
       {!isEdit && (item as any).review && (
         <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 p-3">
           <p className="text-sm text-blue-800">
@@ -357,14 +386,14 @@ export default function ResumeDetailPage() {
 
   const [isReviewing, setIsReviewing] = useState(false);
 
-  
-
   useEffect(() => {
     if (id) dispatch(getResume(id));
   }, [id, dispatch]);
+
   useEffect(() => {
-    setDraft(resume ? structuredClone(resume) : null);
+    setDraft(resume ? normalizeSkillSections(resume) : null);
   }, [resume]);
+
   useEffect(() => {
     if (error) alert(error);
   }, [error]);
@@ -381,10 +410,15 @@ export default function ResumeDetailPage() {
   const saveAll = async () => {
     if (!id || !draft) return;
     try {
+      const normalized = normalizeSkillSections(draft);
       await dispatch(
         patchResume({
           id,
-          patch: { title: draft.title, sessions: draft.sessions, replaceSessions: true } as any,
+          patch: {
+            title: normalized.title,
+            sessions: normalized.sessions,
+            replaceSessions: true,
+          } as any,
         })
       ).unwrap();
       dispatch(setIsEdit(false));
@@ -430,7 +464,7 @@ export default function ResumeDetailPage() {
 
   const cancelEdit = () => {
     if (!window.confirm("편집된 내용을 모두 삭제할까요? 저장하지 않은 변경사항이 사라집니다.")) return;
-    if (resume) setDraft(structuredClone(resume));
+    if (resume) setDraft(normalizeSkillSections(resume));
     dispatch(setIsEdit(false));
     setAddingKey(null);
     setNewTitle("");
@@ -535,21 +569,36 @@ export default function ResumeDetailPage() {
                           if (!sectionTitle.trim()) return;
                           updateDraft((d) => {
                             const key = uniqueSectionKey(sectionTitle, d.sessions.map((s) => s.key));
+                            const isSkill = hasSkillKeyword(sectionTitle);
                             const newSession: ResumeSessionModel = {
                               key,
                               title: sectionTitle.trim(),
                               items: [],
                               wordCount: 0,
                             };
-                            const hasFirstItem = sectionItemTitle.trim() !== "" || sectionItemText.trim() !== "";
-                            if (hasFirstItem) {
-                              newSession.items.push({
-                                title: sectionItemTitle.trim() || "새 항목",
-                                text: sectionItemText.trim() || "",
-                                companyAddress: sectionCompanyAddress.trim(),
-                                startDate: sectionStartDate,
-                                endDate: sectionEndDate,
-                              });
+
+                            if (isSkill) {
+                              newSession.items = [
+                                {
+                                  title: "",
+                                  text: (sectionItemText ?? "").trim(),
+                                  companyAddress: "",
+                                  startDate: "",
+                                  endDate: "",
+                                },
+                              ];
+                            } else {
+                              const hasFirstItem =
+                                sectionItemTitle.trim() !== "" || sectionItemText.trim() !== "";
+                              if (hasFirstItem) {
+                                newSession.items.push({
+                                  title: sectionItemTitle.trim() || "새 항목",
+                                  text: sectionItemText.trim() || "",
+                                  companyAddress: sectionCompanyAddress.trim(),
+                                  startDate: sectionStartDate,
+                                  endDate: sectionEndDate,
+                                });
+                              }
                             }
                             d.sessions.push(newSession);
                           });
@@ -586,12 +635,12 @@ export default function ResumeDetailPage() {
                   <div className="rounded-xl ring-1 ring-dashed ring-gray-300 p-4 bg-gray-50/60">
                     <div className="space-y-3">
                       {!hasSkillKeyword(sectionTitle) && (
-                      <Input
-                        placeholder="항목 제목"
-                        value={sectionItemTitle}
-                        onChange={(e) => setSectionItemTitle(e.target.value)}
-                        className="font-medium h-10 placeholder:text-gray-400 border-gray-400 shadow-sm"
-                      />
+                        <Input
+                          placeholder="항목 제목"
+                          value={sectionItemTitle}
+                          onChange={(e) => setSectionItemTitle(e.target.value)}
+                          className="font-medium h-10 placeholder:text-gray-400 border-gray-400 shadow-sm"
+                        />
                       )}
                       {hasKeyword(sectionItemTitle) && (
                         <ItemMetaFields
@@ -625,171 +674,199 @@ export default function ResumeDetailPage() {
 
         <div className="space-y-6">
           {draft.sessions.map((session) => {
-            const isSkillSection = hasSkillKeyword(session.title)
-            return(
-            <Card key={session.key} className="border-gray-300 shadow-sm">
-              <SectionHeader
-                isEdit={isEdit}
-                session={session}
-                onTitle={(v) =>
-                  updateDraft((d) => {
-                    const s = d.sessions.find((x) => x.key === session.key);
-                    if (s) s.title = v;
-                  })
-                }
-                onRemove={() => {
-                  if (!confirm("이 섹션을 삭제할까요?")) return;
-                  updateDraft((d) => {
-                    d.sessions = d.sessions.filter((s) => s.key !== session.key);
-                  });
-                }}
-              />
+            const isSkillSection = hasSkillKeyword(session.title);
+            return (
+              <Card key={session.key} className="border-gray-300 shadow-sm">
+                <SectionHeader
+                  isEdit={isEdit}
+                  session={session}
+                  onTitle={(v) =>
+                    updateDraft((d) => {
+                      const s = d.sessions.find((x) => x.key === session.key);
+                      if (s) {
+                        s.title = v;
+                        if (hasSkillKeyword(v)) {
+                          const first = s.items?.[0] ?? { text: "" };
+                          s.items = [
+                            {
+                              title: "",
+                              text: first.text ?? "",
+                              companyAddress: "",
+                              startDate: "",
+                              endDate: "",
+                            },
+                          ];
+                        }
+                      }
+                    })
+                  }
+                  onRemove={() => {
+                    if (!confirm("이 섹션을 삭제할까요?")) return;
+                    updateDraft((d) => {
+                      d.sessions = d.sessions.filter((s) => s.key !== session.key);
+                    });
+                  }}
+                />
 
-              <CardContent className="pt-0">
-                <div className="space-y-4">
-                  {session.items.length === 0 && !isEdit ? (
-                    <div className="text-center py-10 text-gray-500">아직 추가된 항목이 없습니다.</div>
-                  ) : (
-                    <>
-                      <div className="space-y-3">
-                        {session.items.map((item, idx) => (
-                          <ItemBlock
-                            key={idx}
-                            isEdit={isEdit}
-                            sessionTitle={session.title}
-                            item={item}
-                            onChangeText={(v) =>
-                              updateDraft((d) => {
-                                const s = d.sessions.find((x) => x.key === session.key);
-                                if (s?.items[idx]) s.items[idx].text = v;
-                              })
-                            }
-                            onChangeTitle={(v) =>
-                              updateDraft((d) => {
-                                const s = d.sessions.find((x) => x.key === session.key);
-                                if (s?.items[idx]) s.items[idx].title = v;
-                              })
-                            }
-                            onChangeCompanyAddress={(v) =>
-                              updateDraft((d) => {
-                                const s = d.sessions.find((x) => x.key === session.key);
-                                if (s?.items[idx]) s.items[idx].companyAddress = v;
-                              })
-                            }
-                            onChangeStartDate={(v) =>
-                              updateDraft((d) => {
-                                const s = d.sessions.find((x) => x.key === session.key);
-                                if (s?.items[idx]) s.items[idx].startDate = v;
-                              })
-                            }
-                            onChangeEndDate={(v) =>
-                              updateDraft((d) => {
-                                const s = d.sessions.find((x) => x.key === session.key);
-                                if (s?.items[idx]) s.items[idx].endDate = v;
-                              })
-                            }
-                            onRemove={() => {
-                              if (!confirm("이 항목을 삭제할까요?")) return;
-                              updateDraft((d) => {
-                                const s = d.sessions.find((x) => x.key === session.key);
-                                if (!s) return;
-                                s.items.splice(idx, 1);
-                              });
-                            }}
-                          />
-                        ))}
-                      </div>
+                <CardContent className="pt-0">
+                  <div className="space-y-4">
+                    {session.items.length === 0 && !isEdit ? (
+                      <div className="text-center py-10 text-gray-500">아직 추가된 항목이 없습니다.</div>
+                    ) : (
+                      <>
+                        <div className="space-y-3">
+                          {session.items.map((item, idx) => (
+                            <ItemBlock
+                              key={idx}
+                              isEdit={isEdit}
+                              sessionTitle={session.title}
+                              item={item}
+                              onChangeText={(v) =>
+                                updateDraft((d) => {
+                                  const s = d.sessions.find((x) => x.key === session.key);
+                                  if (s?.items[idx]) s.items[idx].text = v;
+                                })
+                              }
+                              onChangeTitle={(v) =>
+                                updateDraft((d) => {
+                                  const s = d.sessions.find((x) => x.key === session.key);
+                                  if (s?.items[idx]) s.items[idx].title = v;
+                                })
+                              }
+                              onChangeCompanyAddress={(v) =>
+                                updateDraft((d) => {
+                                  const s = d.sessions.find((x) => x.key === session.key);
+                                  if (s?.items[idx]) s.items[idx].companyAddress = v;
+                                })
+                              }
+                              onChangeStartDate={(v) =>
+                                updateDraft((d) => {
+                                  const s = d.sessions.find((x) => x.key === session.key);
+                                  if (s?.items[idx]) s.items[idx].startDate = v;
+                                })
+                              }
+                              onChangeEndDate={(v) =>
+                                updateDraft((d) => {
+                                  const s = d.sessions.find((x) => x.key === session.key);
+                                  if (s?.items[idx]) s.items[idx].endDate = v;
+                                })
+                              }
+                              onRemove={() => {
+                                if (!confirm("이 항목을 삭제할까요?")) return;
+                                updateDraft((d) => {
+                                  const s = d.sessions.find((x) => x.key === session.key);
+                                  if (!s) return;
+                                  s.items.splice(idx, 1);
+                                });
+                              }}
+                            />
+                          ))}
+                        </div>
 
-                      {isEdit &&
-                        (addingKey === session.key ? (
-                          <div className="rounded-xl ring-1 ring-dashed ring-gray-300 p-4 bg-gray-50/60">
-                            <div className="space-y-3">
-                              
-                              <Input
-                                placeholder="항목 제목"
-                                value={newTitle}
-                                onChange={(e) => setNewTitle(e.target.value)}
-                                className="font-medium h-10 placeholder:text-gray-400 border-gray-400 shadow-sm"
-                              />
-                              {hasKeyword(newTitle) && (
-                                <ItemMetaFields
-                                  companyAddress={newCompanyAddress}
-                                  startDate={newStartDate}
-                                  endDate={newEndDate}
-                                  onCompanyAddress={setNewCompanyAddress}
-                                  onStartDate={setNewStartDate}
-                                  onEndDate={setNewEndDate}
-                                  className="grid grid-cols-1 md:grid-cols-3 gap-2"
+                        {isEdit &&
+                          (addingKey === session.key ? (
+                            <div className="rounded-xl ring-1 ring-dashed ring-gray-300 p-4 bg-gray-50/60">
+                              <div className="space-y-3">
+                                <Input
+                                  placeholder="항목 제목"
+                                  value={newTitle}
+                                  onChange={(e) => setNewTitle(e.target.value)}
+                                  className="font-medium h-10 placeholder:text-gray-400 border-gray-400 shadow-sm"
                                 />
-                              )}
-                              <BulletTextarea
-                                placeholder="내용을 입력하세요"
-                                value={newText}
-                                onChange={setNewText}
-                                className="min-h-[100px] placeholder:text-gray-400 border-gray-400 shadow-sm"
-                                rows={5}
-                              />
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setAddingKey(null);
-                                    setNewTitle("");
-                                    setNewText("");
-                                    setNewCompanyAddress("");
-                                    setNewStartDate("");
-                                    setNewEndDate("");
-                                  }}
-                                  className="border-gray-200"
-                                >
-                                  취소
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  disabled={!newText.trim()}
-                                  onClick={() => {
-                                    if (!newText.trim()) return;
-                                    updateDraft((d) => {
-                                      const s = d.sessions.find((x) => x.key === session.key);
-                                      if (!s) return;
-                                      s.items.push({
-                                        title: newTitle.trim() || "새 항목",
-                                        text: newText.trim(),
-                                        companyAddress: newCompanyAddress.trim(),
-                                        startDate: newStartDate,
-                                        endDate: newEndDate,
+                                {hasKeyword(newTitle) && (
+                                  <ItemMetaFields
+                                    companyAddress={newCompanyAddress}
+                                    startDate={newStartDate}
+                                    endDate={newEndDate}
+                                    onCompanyAddress={setNewCompanyAddress}
+                                    onStartDate={setNewStartDate}
+                                    onEndDate={setNewEndDate}
+                                    className="grid grid-cols-1 md:grid-cols-3 gap-2"
+                                  />
+                                )}
+                                <BulletTextarea
+                                  placeholder="내용을 입력하세요"
+                                  value={newText}
+                                  onChange={setNewText}
+                                  className="min-h-[100px] placeholder:text-gray-400 border-gray-400 shadow-sm"
+                                  rows={5}
+                                />
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setAddingKey(null);
+                                      setNewTitle("");
+                                      setNewText("");
+                                      setNewCompanyAddress("");
+                                      setNewStartDate("");
+                                      setNewEndDate("");
+                                    }}
+                                    className="border-gray-200"
+                                  >
+                                    취소
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    disabled={!newText.trim()}
+                                    onClick={() => {
+                                      if (!newText.trim()) return;
+                                      updateDraft((d) => {
+                                        const s = d.sessions.find((x) => x.key === session.key);
+                                        if (!s) return;
+
+                                        if (hasSkillKeyword(s.title)) {
+                                          s.items = [
+                                            {
+                                              title: "",
+                                              text: newText.trim(),
+                                              companyAddress: "",
+                                              startDate: "",
+                                              endDate: "",
+                                            },
+                                          ];
+                                        } else {
+                                          s.items.push({
+                                            title: newTitle.trim() || "새 항목",
+                                            text: newText.trim(),
+                                            companyAddress: newCompanyAddress.trim(),
+                                            startDate: newStartDate,
+                                            endDate: newEndDate,
+                                          });
+                                        }
                                       });
-                                    });
-                                    setAddingKey(null);
-                                    setNewTitle("");
-                                    setNewText("");
-                                    setNewCompanyAddress("");
-                                    setNewStartDate("");
-                                    setNewEndDate("");
-                                  }}
-                                >
-                                  추가
-                                </Button>
+                                      setAddingKey(null);
+                                      setNewTitle("");
+                                      setNewText("");
+                                      setNewCompanyAddress("");
+                                      setNewStartDate("");
+                                      setNewEndDate("");
+                                    }}
+                                  >
+                                    추가
+                                  </Button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ) : (!isSkillSection && (
-                          <Button
-                            variant="outline"
-                            className="w-full border-gray-200"
-                            onClick={() => setAddingKey(session.key)}
-                          >
-                            <Plus className="h-4 w-4 mr-2" /> 새 항목 추가하기
-                          </Button>
-                        )))}
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-          )}
+                          ) : (
+                            !isSkillSection && (
+                              <Button
+                                variant="outline"
+                                className="w-full border-gray-200"
+                                onClick={() => setAddingKey(session.key)}
+                              >
+                                <Plus className="h-4 w-4 mr-2" /> 새 항목 추가하기
+                              </Button>
+                            )
+                          ))}
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {!isEdit && (
@@ -798,9 +875,9 @@ export default function ResumeDetailPage() {
               variant="outline"
               onClick={() => {
                 const hasOldText = resume?.sessions?.some((session) =>
-                  session.items.some((item) => !!item.oldText)
+                  session.items.some((item) => !!(item as any).oldText)
                 );
-                dispatch(setHasFeedbackResume(hasOldText));
+                dispatch(setHasFeedbackResume(!!hasOldText));
                 navigate(`/analysis/${id}`);
               }}
               className="border-gray-200"
