@@ -33,6 +33,7 @@ import type {
 } from "@/types/resume";
 
 const KEYWORDS = ["경력", "학력", "프로젝트", "수상", "인증", "활동", "경험", "project", "award"];
+//const SKILL_KEYWORDS = ["기술", "스킬", "스택" ,"skills"]
 
 const uniqueSectionKey = (title: string, existing: string[]) => {
   const base = title.trim();
@@ -141,7 +142,7 @@ function ItemMetaFields({
           placeholder="회사/기관/개인"
           value={companyAddress}
           onChange={(e) => onCompanyAddress(e.target.value)}
-          className="h-9 border-gray-400 shadow-md placeholder:text-gray-400"
+          className="h-9 border-gray-400 shadow-sm placeholder:text-gray-400"
         />
       </div>
       <div>
@@ -150,7 +151,7 @@ function ItemMetaFields({
           type="month"
           value={startDate}
           onChange={(e) => onStartDate(e.target.value)}
-          className="h-9 border-gray-400 shadow-md placeholder:text-gray-400"
+          className="h-9 border-gray-400 shadow-sm placeholder:text-gray-400"
         />
       </div>
       <div>
@@ -159,7 +160,7 @@ function ItemMetaFields({
           type="month"
           value={endDate}
           onChange={(e) => onEndDate(e.target.value)}
-          className="h-9 border-gray-400 shadow-md placeholder:text-gray-400"
+          className="h-9 border-gray-400 shadow-sm placeholder:text-gray-400"
         />
       </div>
     </div>
@@ -194,7 +195,7 @@ function SectionHeader({
             <Input
               value={session.title}
               onChange={(e) => onTitle(e.target.value)}
-              className="text-lg border-gray-400 shadow-md font-semibold h-9 w-[min(28rem,90vw)] placeholder:text-gray-400"
+              className="text-lg border-gray-400 shadow-sm font-semibold h-9 w-[min(28rem,90vw)] placeholder:text-gray-400"
               placeholder="섹션 제목"
             />
           ) : (
@@ -250,8 +251,8 @@ function ItemBlock({
       className={[
         "rounded-xl p-4 transition-shadow",
         isEdit
-          ? "ring-1 ring-gray-200 bg-white focus-within:ring-2 focus-within:ring-blue-300"
-          : "ring-1 ring-gray-100 bg-white hover:shadow-sm",
+          ? "ring-1 ring-gray-300 bg-white focus-within:ring-2 focus-within:ring-blue-300"
+          : "ring-1 ring-gray-300 bg-white hover:shadow-sm",
       ].join(" ")}
     >
       <div className="flex items-center justify-between gap-2">
@@ -259,7 +260,7 @@ function ItemBlock({
           <Input
             value={item.title}
             onChange={(e) => onChangeTitle(e.target.value)}
-            className="font-medium h-10 w-[min(28rem,90vw)] placeholder:text-gray-400 border-gray-400 shadow-md"
+            className="font-medium h-10 w-[min(28rem,90vw)] placeholder:text-gray-400 border-gray-400 shadow-sm"
             placeholder="항목 제목"
           />
         ) : (
@@ -287,20 +288,22 @@ function ItemBlock({
           onEndDate={onChangeEndDate}
         />
       )}
-      {!isEdit && item.startDate && item.endDate && (
-        <p className="text-xs text-gray-500 mt-1">
-          {item.startDate} ~ {item.endDate}
-        </p>
-      )}
-      {!isEdit && item.companyAddress && (
-        <p className="text-xs text-gray-500 mt-1">{item.companyAddress}</p>
-      )}
+      <div className="flex ">
+        {!isEdit && item.companyAddress && (
+          <p className="text-xs text-gray-500 mt-1 mr-1">{item.companyAddress}</p>
+        )}
+        {!isEdit && item.startDate && item.endDate && (
+          <p className="text-xs text-gray-500 mt-1">
+            | {item.startDate} ~ {item.endDate}
+          </p>
+        )}
+      </div>
       <div className="mt-3">
         {isEdit ? (
           <BulletTextarea
             value={item.text}
             onChange={onChangeText}
-            className="w-full min-h-[96px] border-gray-400 shadow-md placeholder:text-gray-400"
+            className="w-full min-h-[96px] border-gray-400 shadow-sm placeholder:text-gray-400"
           />
         ) : (
           <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
@@ -477,13 +480,13 @@ export default function ResumeDetailPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-6 py-8">
-        <Card className="mb-8 shadow-sm border-gray-100">
+        <Card className="mb-2 shadow-sm border-gray-300">
           <CardHeader className="pb-3">
             {isEdit ? (
               <Input
                 value={draft.title}
                 onChange={(e) => updateDraft((d) => (d.title = e.target.value))}
-                className="text-2xl font-bold h-11 border-gray-400 shadow-md placeholder:text-gray-400"
+                className="text-2xl font-bold h-11 border-gray-400 shadow-sm placeholder:text-gray-400"
                 placeholder="이력서 제목"
               />
             ) : (
@@ -501,7 +504,7 @@ export default function ResumeDetailPage() {
         </Card>
 
         {isEdit && (
-          <Card className="mb-6 border-gray-100 shadow-sm">
+          <Card className="mb-2 border-white shadow-sm">
             <CardContent className="pt-6">
               {addSectionOpen ? (
                 <div className="space-y-4">
@@ -511,7 +514,7 @@ export default function ResumeDetailPage() {
                       placeholder="섹션 제목"
                       value={sectionTitle}
                       onChange={(e) => setSectionTitle(e.target.value)}
-                      className="h-10 placeholder:text-gray-400 border-gray-400 shadow-md"
+                      className="h-10 placeholder:text-gray-400 border-gray-400 shadow-sm"
                     />
                     <div className="flex gap-2">
                       <Button
@@ -573,7 +576,7 @@ export default function ResumeDetailPage() {
                         placeholder="항목 제목"
                         value={sectionItemTitle}
                         onChange={(e) => setSectionItemTitle(e.target.value)}
-                        className="font-medium h-10 placeholder:text-gray-400 border-gray-400 shadow-md"
+                        className="font-medium h-10 placeholder:text-gray-400 border-gray-400 shadow-sm"
                       />
                       {hasKeyword(sectionItemTitle) && (
                         <ItemMetaFields
@@ -590,7 +593,7 @@ export default function ResumeDetailPage() {
                         placeholder="내용을 입력하세요"
                         value={sectionItemText}
                         onChange={setSectionItemText}
-                        className="min-h-[100px] placeholder:text-gray-400 border-gray-400 shadow-md"
+                        className="min-h-[100px] placeholder:text-gray-400 border-gray-400 shadow-sm"
                         rows={5}
                       />
                     </div>
@@ -607,7 +610,7 @@ export default function ResumeDetailPage() {
 
         <div className="space-y-6">
           {draft.sessions.map((session) => (
-            <Card key={session.key} className="border-gray-100 shadow-sm">
+            <Card key={session.key} className="border-gray-300 shadow-sm">
               <SectionHeader
                 isEdit={isEdit}
                 session={session}
@@ -687,7 +690,7 @@ export default function ResumeDetailPage() {
                                 placeholder="항목 제목"
                                 value={newTitle}
                                 onChange={(e) => setNewTitle(e.target.value)}
-                                className="font-medium h-10 placeholder:text-gray-400 border-gray-400 shadow-md"
+                                className="font-medium h-10 placeholder:text-gray-400 border-gray-400 shadow-sm"
                               />
                               {hasKeyword(newTitle) && (
                                 <ItemMetaFields
@@ -704,7 +707,7 @@ export default function ResumeDetailPage() {
                                 placeholder="내용을 입력하세요"
                                 value={newText}
                                 onChange={setNewText}
-                                className="min-h-[100px] placeholder:text-gray-400 border-gray-400 shadow-md"
+                                className="min-h-[100px] placeholder:text-gray-400 border-gray-400 shadow-sm"
                                 rows={5}
                               />
                               <div className="flex justify-end gap-2">
