@@ -5,7 +5,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@radix-ui/react-dropdown-menu";
-import { Sparkles, Search, User, Settings, LogOut } from "lucide-react";
+import { Sparkles, Search, User, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "./avatar";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { logout } from "../../redux/slices/authSlice";

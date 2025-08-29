@@ -6,7 +6,6 @@ import {
   View,
   PDFViewer,
   Font,
-  pdf,
 } from "@react-pdf/renderer";
 import { Resume, ResumeItem, ResumeSession } from "@/types/resume";
 
