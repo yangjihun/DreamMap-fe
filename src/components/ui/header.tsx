@@ -49,7 +49,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div
-            className="flex items-center space-x-3"
+            className="flex items-center space-x-3 cursor-pointer"
             onClick={() => navigate("/")}
           >
             <Sparkles className="h-7 w-7 text-blue-600" />
