@@ -323,7 +323,7 @@ function ItemBlock({
             {showSkillMeta ? "" : item.title}
           </h4>
         )}
-        {isEdit && (
+        {(isEdit && !showSkillMeta) && (
           <Button
             variant="ghost"
             size="icon"
