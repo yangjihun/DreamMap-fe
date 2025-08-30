@@ -283,11 +283,6 @@ export default function AnalysisPage() {
                               return (
                                 <div
                                   key={itemIndex}
-                                  title={
-                                    isDisabled
-                                      ? "분석하지 않는 항목입니다."
-                                      : ""
-                                  }
                                   className={`p-5 border-2 rounded-xl transition-all duration-200 ${
                                     isDisabled
                                       ? "cursor-default border-gray-200 bg-gray-50"
@@ -298,7 +293,9 @@ export default function AnalysisPage() {
                                         }`
                                   }`}
                                   onClick={() =>
-                                    !isDisabled ? setSelectedItem(item) : {}
+                                    !isDisabled
+                                      ? setSelectedItem(item)
+                                      : alert("분석하지 않는 항목입니다.")
                                   }
                                 >
                                   {item.title && (
