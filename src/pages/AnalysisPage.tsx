@@ -13,7 +13,6 @@ import {
   ArrowLeft,
   Star,
   CheckCircle,
-  Clock,
   TrendingUp,
   FileText,
   MessageSquare,

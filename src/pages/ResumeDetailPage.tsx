@@ -18,7 +18,6 @@ import {
   Plus,
   Pencil,
   Trash2,
-  CheckCircle,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
@@ -323,7 +322,7 @@ function ItemBlock({
             {showSkillMeta ? "" : item.title}
           </h4>
         )}
-        {(isEdit && !showSkillMeta) && (
+        {isEdit && (
           <Button
             variant="ghost"
             size="icon"

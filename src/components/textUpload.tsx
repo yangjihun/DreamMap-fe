@@ -23,7 +23,7 @@ const SKILL_KEYWORDS = [
   "기본 정보",
   "certificate",
 ];
-const EDUCATION_KEYWORDS = ["학력", "학교", "학과", "학사", "학위"];
+//const EDUCATION_KEYWORDS = ["학력", "학교", "학과", "학사", "학위"];
 
 export type DraftItem = {
   id: string;

@@ -10,7 +10,6 @@ import { Input } from "../components/ui/input";
 import {
   FileText,
   Sparkles,
-  Loader2,
   AlertCircle,
   File as FileIcon,
   CheckCircle,
