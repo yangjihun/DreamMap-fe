@@ -36,7 +36,15 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "bold",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  personalInfo: {
     marginBottom: 16,
+    textAlign: "center",
+  },
+  personalInfoText: {
+    fontSize: 11,
     textAlign: "center",
   },
   session: {
@@ -57,6 +65,12 @@ const styles = StyleSheet.create({
   itemText: {
     fontSize: 10.5,
     marginLeft: 8,
+  },
+  itemMeta: {
+    fontSize: 9,
+    marginLeft: 8,
+    color: "#6B7280",
+    marginBottom: 2,
   },
   divider: {
     borderBottomWidth: 1,
@@ -82,18 +96,78 @@ export const ResumeDocument = ({ resume }: { resume: Resume }) => {
         <View style={styles.title}>
           <Text style={styles.title}>{resume.title}</Text>
         </View>
-        {resume.sessions.map((session: ResumeSession, sIdx: number) => (
-          <View key={sIdx} style={styles.session}>
-            <Text style={styles.sessionTitle}>{session.title}</Text>
-            <View style={styles.divider} />
-            {session.items.map((item: ResumeItem, iIdx: number) => (
-              <View key={iIdx} style={styles.item}>
-                <Text style={styles.itemTitle}>{item.title}</Text>
-                <Text style={styles.itemText}>{item.text}</Text>
+
+        {/* Handle Personal Information section specially */}
+        {resume.sessions.map((session: ResumeSession, sIdx: number) => {
+          if (session.title === "개인정보") {
+            // Personal Information: display items directly under title without session header
+            return (
+              <View key="personal-info" style={styles.personalInfo}>
+                <Text style={styles.personalInfoText}>
+                  {session.items.map((item: ResumeItem, iIdx: number) => (
+                    <>
+                      {item.text}
+                      {iIdx < session.items.length - 1 && " | "}
+                    </>
+                  ))}
+                </Text>
               </View>
-            ))}
-          </View>
-        ))}
+            );
+          } else if (session.title === "Skills") {
+            // Skills section with "Name: Text" format
+            return (
+              <View key={sIdx} style={styles.session}>
+                <Text style={styles.sessionTitle}>{session.title}</Text>
+                <View style={styles.divider} />
+                {session.items.map((item: ResumeItem, iIdx: number) => (
+                  <View key={iIdx} style={styles.item}>
+                    <Text style={styles.itemText}>
+                      {item.title && `${item.title}: `}
+                      {item.text}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            );
+          } else {
+            // Regular sections with normal structure
+            return (
+              <View key={sIdx} style={styles.session}>
+                <Text style={styles.sessionTitle}>{session.title}</Text>
+                <View style={styles.divider} />
+                {session.items.map((item: ResumeItem, iIdx: number) => (
+                  <View key={iIdx} style={styles.item}>
+                    <Text style={styles.itemTitle}>{item.title}</Text>
+                    {item.companyAddress && (
+                      <Text style={styles.itemMeta}>
+                        {item.companyAddress}
+                        {item.startDate && (
+                          <>
+                            {" | "}
+                            {item.startDate}
+                            {item.endDate &&
+                              item.startDate !== item.endDate && (
+                                <> ~ {item.endDate}</>
+                              )}
+                          </>
+                        )}
+                      </Text>
+                    )}
+                    {!item.companyAddress && item.startDate && (
+                      <Text style={styles.itemMeta}>
+                        {item.startDate}
+                        {item.endDate && item.startDate !== item.endDate && (
+                          <> ~ {item.endDate}</>
+                        )}
+                      </Text>
+                    )}
+                    <Text style={styles.itemText}>{item.text}</Text>
+                  </View>
+                ))}
+              </View>
+            );
+          }
+        })}
       </Page>
     </Document>
   );

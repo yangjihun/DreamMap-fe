@@ -29,7 +29,7 @@ const formatDate = (dateString: string) => {
 const templates = [
   {
     id: "blank",
-    title: "빈 레쥬메",
+    title: "빈 이력서",
     description: "처음부터 시작하기",
     icon: FileText,
     color: "bg-blue-50 text-blue-600",
@@ -71,7 +71,7 @@ export default function DashboardPage() {
       <main className="max-w-7xl mx-auto px-6 py-8">
         <section className="mb-12">
           <h2 className="text-lg font-medium text-gray-900 mb-6">
-            새 레쥬메 시작하기
+            새 이력서 시작하기
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {templates.map((template) => (
@@ -103,7 +103,7 @@ export default function DashboardPage() {
 
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-medium text-gray-900">레쥬메 목록</h2>
+            <h2 className="text-lg font-medium text-gray-900">이력서 목록</h2>
           </div>
 
           {loading ? (
@@ -117,10 +117,10 @@ export default function DashboardPage() {
             <div className="text-center py-12">
               <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                아직 레쥬메가 없습니다
+                아직 이력서가 없습니다
               </h3>
               <p className="text-gray-500 mb-6">
-                위의 템플릿을 선택하여 첫 번째 레쥬메를 만들어보세요
+                위의 템플릿을 선택하여 첫 번째 이력서를 만들어보세요
               </p>
             </div>
           ) : (

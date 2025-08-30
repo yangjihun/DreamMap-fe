@@ -37,7 +37,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError<any>) => {
-    if (error.response?.status === 401 && error.config?.url !== '/auth/login') {
+    if (error.response?.status === 401 && error.config?.url !== "/auth/login") {
       console.error("인증이 만료되었습니다. 다시 로그인해주세요.");
       store.dispatch(logout());
       window.location.href = "/login";

@@ -19,18 +19,19 @@ const sortResumes = (list: Resume[]) =>
     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
   });
 
-
 // 전체 목록
 export const fetchResumes = createAsyncThunk<
   Resume[],
-  { name?: string} | undefined,
+  { name?: string } | undefined,
   { rejectValue: string }
 >("resume/fetchResumes", async (query: any, { rejectWithValue }) => {
   try {
-    const res = await api.get("/resume/all", { params: {...query || {}}});
+    const res = await api.get("/resume/all", { params: { ...(query || {}) } });
     return sortResumes(res.data.data as Resume[]);
   } catch (e: any) {
-    return rejectWithValue(e.response?.data?.message ?? "이력서 목록 로드 실패");
+    return rejectWithValue(
+      e.response?.data?.message ?? "이력서 목록 로드 실패"
+    );
   }
 });
 
@@ -254,6 +255,19 @@ export const patchResume = createAsyncThunk<
   }
 });
 
+export const getResumeFromAI = createAsyncThunk<
+  Resume,
+  string,
+  { rejectValue: string }
+>("resume/getResumeFromAI", async (text, { rejectWithValue }) => {
+  try {
+    const res = await api.post(`/gemini/generate/json`, { text });
+    return res.data.data;
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.message ?? "이력서 생성 실패");
+  }
+});
+
 const resumeSlice = createSlice({
   name: "resume",
   initialState,
@@ -444,6 +458,18 @@ const resumeSlice = createSlice({
         state.resume = action.payload;
       })
       .addCase(generateResumeWithReview.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(getResumeFromAI.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(getResumeFromAI.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = "";
+        state.resume = action.payload;
+      })
+      .addCase(getResumeFromAI.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

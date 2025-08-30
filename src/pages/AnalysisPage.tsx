@@ -13,7 +13,6 @@ import {
   ArrowLeft,
   Star,
   CheckCircle,
-  Clock,
   TrendingUp,
   FileText,
   MessageSquare,
@@ -209,7 +208,7 @@ export default function AnalysisPage() {
         <div className="flex items-center gap-3 mb-8">
           <Button variant="outline" onClick={goToEdit} className="mr-3">
             <Pencil className="w-4 h-4 mr-1" />
-            이력서 수정
+            이력서 편집
           </Button>
           {!hasFeedbackResume ? (
             <Button
@@ -291,18 +290,28 @@ export default function AnalysisPage() {
                                     {item.title}
                                   </h4>
                                 )}
+                                {session.key !== "intro" && (
+                                  <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                                    {item.companyAddress && (
+                                      <span>{item.companyAddress}</span>
+                                    )}
+                                    {item.startDate && (
+                                      <>
+                                        {item.companyAddress && <span>|</span>}
+                                        <span>
+                                          {item.startDate}
+                                          {item.endDate &&
+                                            item.startDate === item.endDate && (
+                                              <span>~ {item.endDate}</span>
+                                            )}
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                )}
                                 <p className="text-gray-700 mb-3 leading-relaxed whitespace-pre-wrap">
                                   {item.text}
                                 </p>
-                                {(item.startDate || item.endDate) && (
-                                  <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
-                                    <Clock className="h-4 w-4 text-gray-400" />
-                                    <span className="font-medium">
-                                      {item.startDate} -{" "}
-                                      {item.endDate || "현재"}
-                                    </span>
-                                  </div>
-                                )}
                               </div>
                             )
                           )}
