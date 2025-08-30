@@ -275,45 +275,65 @@ export default function AnalysisPage() {
 
                         <div className="space-y-3 ml-12">
                           {session.items.map(
-                            (item: ResumeItem, itemIndex: number) => (
-                              <div
-                                key={itemIndex}
-                                className={`p-5 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
-                                  selectedItem === item
-                                    ? "border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg"
-                                    : "border-gray-200 bg-white hover:border-blue-300"
-                                }`}
-                                onClick={() => setSelectedItem(item)}
-                              >
-                                {item.title && (
-                                  <h4 className="font-semibold text-gray-900 mb-3 text-lg">
-                                    {item.title}
-                                  </h4>
-                                )}
-                                {session.key !== "intro" && (
-                                  <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                                    {item.companyAddress && (
-                                      <span>{item.companyAddress}</span>
-                                    )}
-                                    {item.startDate && (
-                                      <>
-                                        {item.companyAddress && <span>|</span>}
-                                        <span>
-                                          {item.startDate}
-                                          {item.endDate &&
-                                            item.startDate === item.endDate && (
-                                              <span>~ {item.endDate}</span>
-                                            )}
-                                        </span>
-                                      </>
-                                    )}
-                                  </div>
-                                )}
-                                <p className="text-gray-700 mb-3 leading-relaxed whitespace-pre-wrap">
-                                  {item.text}
-                                </p>
-                              </div>
-                            )
+                            (item: ResumeItem, itemIndex: number) => {
+                              const isDisabled = [
+                                "personal-info",
+                                "education",
+                              ].includes(session.key);
+                              return (
+                                <div
+                                  key={itemIndex}
+                                  title={
+                                    isDisabled
+                                      ? "분석하지 않는 항목입니다."
+                                      : ""
+                                  }
+                                  className={`p-5 border-2 rounded-xl transition-all duration-200 ${
+                                    isDisabled
+                                      ? "cursor-default border-gray-200 bg-gray-50"
+                                      : `cursor-pointer hover:shadow-md hover:scale-[1.02] ${
+                                          selectedItem === item
+                                            ? "border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg"
+                                            : "border-gray-200 bg-white hover:border-blue-300"
+                                        }`
+                                  }`}
+                                  onClick={() =>
+                                    !isDisabled ? setSelectedItem(item) : {}
+                                  }
+                                >
+                                  {item.title && (
+                                    <h4 className="font-semibold text-gray-900 mb-3 text-lg">
+                                      {item.title}
+                                    </h4>
+                                  )}
+                                  {session.key !== "intro" && (
+                                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                                      {item.companyAddress && (
+                                        <span>{item.companyAddress}</span>
+                                      )}
+                                      {item.startDate && (
+                                        <>
+                                          {item.companyAddress && (
+                                            <span>|</span>
+                                          )}
+                                          <span>
+                                            {item.startDate}
+                                            {item.endDate &&
+                                              item.startDate ===
+                                                item.endDate && (
+                                                <span>~ {item.endDate}</span>
+                                              )}
+                                          </span>
+                                        </>
+                                      )}
+                                    </div>
+                                  )}
+                                  <p className="text-gray-700 mb-3 leading-relaxed whitespace-pre-wrap">
+                                    {item.text}
+                                  </p>
+                                </div>
+                              );
+                            }
                           )}
                         </div>
 
@@ -368,8 +388,9 @@ export default function AnalysisPage() {
                           <div className="text-sm text-blue-800">
                             <p className="font-medium mb-1">팁:</p>
                             <p>
-                              왼쪽의 텍스트를를 클릭하여 더 자세한 피드백을
-                              확인하세요.
+                              왼쪽의 텍스트를 클릭하여 더 자세한 피드백을
+                              확인하세요. 개인정보와 학력사항은 분석하지
+                              않습니다.
                             </p>
                           </div>
                         </div>
