@@ -261,6 +261,7 @@ export default function HomePage() {
               containerClass="pb-4"
               itemClass="px-3"
               arrows
+              autoPlay
             >
               {successStoryData.map((item) => {
                 const color =
@@ -298,7 +299,7 @@ export default function HomePage() {
           </div>
         </div>
         {/* Price Section */}
-        <div className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="mb-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-3xl mb-4 text-gray-900">요금제</h2>
