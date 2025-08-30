@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { Button } from "../components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "../components/ui/card";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
-import { useAppDispatch } from "../redux/hooks";
-import { login, signup } from "../redux/slices/authSlice";
-import SignupModal from "../components/signup-modal";
+import { useAppDispatch } from "@/redux/hooks";
+import { login, signup } from "@/redux/slices/authSlice";
+import SignupModal from "@/components/signup-modal";
 import type { SignupData } from "@/components/signup-modal";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
@@ -21,7 +21,9 @@ import Header from "@/components/ui/header";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  // 로그인 에러와 회원가입 에러를 분리하기 위해 이름 변경
+  const [loginError, setLoginError] = useState<string | null>(null);
+
   const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -41,7 +43,7 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setLoginError(null);
     try {
       // 1. 입력된 이메일과 비밀번호로 login thunk를 디스패치합니다.
       await dispatch(login({ email, password })).unwrap();
@@ -51,15 +53,12 @@ export default function LoginPage() {
     } catch (error: any) {
       // 3. unwrap()이 에러를 던지면 (로그인 실패 시) 에러를 처리합니다.
 
-      setError(error.message || "로그인에 실패했습니다. 다시 시도해주세요.");
+      setLoginError(error.message || "로그인에 실패했습니다. 다시 시도해주세요.");
     }
   };
 
   // 회원가입 완료 후 자동 로그인
   const handleSignupComplete = async (data: SignupData) => {
-    console.log("회원가입 완료:", data);
-    setError(null);
-    try {
       // signup thunk에 전달할 페이로드 생성
       const backendPayload = {
         email: data.email,
@@ -68,28 +67,15 @@ export default function LoginPage() {
         school: data.school,
         major: data.major,
         career: data.experience,
-        skill: data.skills.join(", "), // 배열을 쉼표로 구분된 문자열로 변환
+        skill: data.skills.join(", "),
         region: data.location,
         interestJob: data.desiredJob,
         loginType: "local", //일단 하드코딩
         level: "customer", //일단 하드코딩
-        // 백엔드에서 필요한 기타 필드 (예: level, loginType)도 추가해야 함
       };
 
-      // signup thunk를 디스패치하고 결과를 unwrap
+      // .unwrap()을 통해 발생한 에러는 이제 모달의 catch 블록으로 전달됨
       await dispatch(signup(backendPayload)).unwrap();
-
-      // 회원가입 성공 후 메인페이지로 이동
-      navigate("/");
-    } catch (error: any) {
-      console.error("회원가입 실패:", error);
-      // 필요하다면 사용자에게 에러 메시지를 표시
-      setError(
-        error.message || "회원가입에 실패했습니다. 입력 정보를 확인해주세요."
-      );
-    } finally {
-      setIsSignupModalOpen(false);
-    }
   };
 
   return (
@@ -135,9 +121,9 @@ export default function LoginPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleLogin} className="space-y-4">
-                {error && (
+                {loginError  && (
                   <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-sm">
-                    {error}
+                    {loginError }
                   </div>
                 )}
                 <div className="space-y-2">
@@ -155,7 +141,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
-                      setError(null);
+                      setLoginError(null);
                     }}
                     placeholder="이메일을 입력하세요"
                     className="h-12 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
@@ -178,7 +164,7 @@ export default function LoginPage() {
                       value={password}
                       onChange={(e) => {
                         setPassword(e.target.value);
-                        setError(null);
+                        setLoginError(null);
                       }}
                       placeholder="비밀번호를 입력하세요"
                       className="h-12 bg-gray-50 border-gray-200 focus:bg-white transition-colors pr-12"
