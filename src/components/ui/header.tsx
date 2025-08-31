@@ -45,7 +45,7 @@ export default function Header() {
   };
 
   return (
-    <header className={`bg-white border-b border-gray-200 ${isDashboardPage ? 'mb-8' : 'mb-0'}`}>
+    <header className={`bg-white border-b border-gray-200 ${isDashboardPage ? 'mb-8 md:mb-0' : 'mb-0'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
         <div className="flex items-center justify-between">
           <div
@@ -60,7 +60,7 @@ export default function Header() {
 
           <div className="flex flex-col-reverse md:flex-row items-center space-x-2 sm:space-x-4">
             {isDashboardPage && (
-              <div className="absolute top-20 right-4">
+              <div className="absolute md:relative md:top-0 top-20 right-4">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
