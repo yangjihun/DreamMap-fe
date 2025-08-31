@@ -46,17 +46,19 @@ export default function Header() {
 
   return (
     <header className="bg-white border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-6 py-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
         <div className="flex items-center justify-between">
           <div
-            className="flex items-center space-x-3 cursor-pointer"
+            className="flex items-center space-x-2 sm:space-x-3 cursor-pointer"
             onClick={() => navigate("/")}
           >
-            <Sparkles className="h-7 w-7 text-blue-600" />
-            <h1 className="text-xl font-semibold text-gray-900">미래지도</h1>
+            <Sparkles className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
+            <h1 className="text-lg sm:text-xl font-semibold text-gray-900">
+              미래지도
+            </h1>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {isDashboardPage && (
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -64,7 +66,7 @@ export default function Header() {
                   type="text"
                   placeholder="이력서 검색"
                   onKeyDown={onCheckEnter}
-                  className="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="pl-10 pr-4 py-2 w-48 sm:w-56 md:w-64 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             )}
