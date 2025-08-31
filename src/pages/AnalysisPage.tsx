@@ -134,6 +134,7 @@ export default function AnalysisPage() {
       session.items.some((item) => !!item.oldText)
     );
     dispatch(setHasFeedbackResume(hasOldText));
+    console.log("??", resume);
   }, [resume]);
 
   const getSessionIcon = (key: string) => {
@@ -302,6 +303,7 @@ export default function AnalysisPage() {
                                 const isDisabled = [
                                   "education",
                                   "personal_info",
+                                  "personal-info",
                                   "skills",
                                   "degree",
                                 ].includes(session.key);
