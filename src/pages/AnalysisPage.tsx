@@ -116,11 +116,20 @@ export default function AnalysisPage() {
 
   const handleMergeFeedback = async () => {
     setIsGenerating(true);
-    // 실제로는 백엔드 API 호출
-    await dispatch(generateResumeWithReview(id || ""));
-    setIsGenerating(false);
-    alert("피드백이 반영된 새로운 이력서가 생성되었습니다!");
-    dispatch(setHasFeedbackResume(true));
+    try {
+      // 피드백 반영하여 새 이력서 생성
+      await dispatch(generateResumeWithReview(id || ""));
+
+      // 새로운 이력서 데이터 다시 가져오기
+      await dispatch(getResume(id || ""));
+
+      alert("피드백이 반영된 새로운 이력서가 생성되었습니다!");
+      dispatch(setHasFeedbackResume(true));
+    } catch (error) {
+      alert("이력서 생성 중 오류가 발생했습니다.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   useEffect(() => {
@@ -316,11 +325,19 @@ export default function AnalysisPage() {
                                     </div>
                                     <div className="font-medium text-gray-700 text-base">
                                       {item.degree}
-                                      {item.endDate && (
+                                      {item.startDate && item.endDate ? (
+                                        <span className="text-gray-500 ml-2">
+                                          | {item.startDate} ~ {item.endDate}
+                                        </span>
+                                      ) : item.endDate ? (
                                         <span className="text-gray-500 ml-2">
                                           | {item.endDate}
                                         </span>
-                                      )}
+                                      ) : item.startDate ? (
+                                        <span className="text-gray-500 ml-2">
+                                          | {item.startDate}
+                                        </span>
+                                      ) : null}
                                     </div>
                                     {item.GPA && (
                                       <div className="flex items-start gap-2 text-sm">

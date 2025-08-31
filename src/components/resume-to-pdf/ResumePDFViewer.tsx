@@ -131,7 +131,13 @@ export const ResumeDocument = ({ resume }: { resume: Resume }) => {
                     <Text style={styles.itemTitle}>{item.title}</Text>
                     <Text style={styles.itemText}>
                       {item.degree}
-                      {item.endDate && ` | ${item.endDate}`}
+                      {item.startDate && item.endDate
+                        ? ` | ${item.startDate} ~ ${item.endDate}`
+                        : item.endDate
+                        ? ` | ${item.endDate}`
+                        : item.startDate
+                        ? ` | ${item.startDate}`
+                        : null}
                     </Text>
                     {item.GPA && (
                       <Text style={styles.itemText}>GPA: {item.GPA}</Text>
