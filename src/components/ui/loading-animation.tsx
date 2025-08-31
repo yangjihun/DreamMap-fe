@@ -48,7 +48,7 @@ export function LoadingAnimation({
           </div>
 
           {/* Progress Bar */}
-          <div className="w-80 max-w-full">
+          <div className="w-full max-w-full">
             <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
               <div
                 className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full animate-pulse relative overflow-hidden"
