@@ -60,7 +60,7 @@ export default function Header() {
 
           <div className="flex flex-col-reverse md:flex-row items-center space-x-2 sm:space-x-4">
             {isDashboardPage && (
-              <div className="absolute top-20 right-4">
+              <div className="absolute md:relative md:top-0 top-20 right-4">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
