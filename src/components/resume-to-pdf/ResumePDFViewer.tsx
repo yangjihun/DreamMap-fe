@@ -99,7 +99,10 @@ export const ResumeDocument = ({ resume }: { resume: Resume }) => {
 
         {/* Handle Personal Information section specially */}
         {resume.sessions.map((session: ResumeSession, sIdx: number) => {
-          if (session.title === "개인정보") {
+          if (
+            session.title === "개인정보" ||
+            session.title === "PERSONAL INFO"
+          ) {
             // Personal Information: display items directly under title without session header
             return (
               <View key="personal-info" style={styles.personalInfo}>
@@ -111,6 +114,36 @@ export const ResumeDocument = ({ resume }: { resume: Resume }) => {
                     </>
                   ))}
                 </Text>
+              </View>
+            );
+          } else if (
+            ["Education", "학력", "EDUCATION"].some((k) =>
+              session.title.includes(k)
+            )
+          ) {
+            // Education section with school name (header), degree (endDate), GPA format
+            return (
+              <View key={sIdx} style={styles.session}>
+                <Text style={styles.sessionTitle}>{session.title}</Text>
+                <View style={styles.divider} />
+                {session.items.map((item: ResumeItem, iIdx: number) => (
+                  <View key={iIdx} style={styles.item}>
+                    <Text style={styles.itemTitle}>{item.title}</Text>
+                    <Text style={styles.itemText}>
+                      {item.degree}
+                      {item.startDate && item.endDate
+                        ? ` | ${item.startDate} ~ ${item.endDate}`
+                        : item.endDate
+                        ? ` | ${item.endDate}`
+                        : item.startDate
+                        ? ` | ${item.startDate}`
+                        : null}
+                    </Text>
+                    {item.GPA && (
+                      <Text style={styles.itemText}>GPA: {item.GPA}</Text>
+                    )}
+                  </View>
+                ))}
               </View>
             );
           } else if (session.title === "Skills") {
@@ -138,9 +171,9 @@ export const ResumeDocument = ({ resume }: { resume: Resume }) => {
                 {session.items.map((item: ResumeItem, iIdx: number) => (
                   <View key={iIdx} style={styles.item}>
                     <Text style={styles.itemTitle}>{item.title}</Text>
-                    {item.companyAddress && (
+                    {item.company ? (
                       <Text style={styles.itemMeta}>
-                        {item.companyAddress}
+                        {item.company}
                         {item.startDate && (
                           <>
                             {" | "}
@@ -152,15 +185,28 @@ export const ResumeDocument = ({ resume }: { resume: Resume }) => {
                           </>
                         )}
                       </Text>
-                    )}
-                    {!item.companyAddress && item.startDate && (
+                    ) : item.role ? (
+                      <Text style={styles.itemMeta}>
+                        {item.role}
+                        {item.startDate && (
+                          <>
+                            {" | "}
+                            {item.startDate}
+                            {item.endDate &&
+                              item.startDate !== item.endDate && (
+                                <> ~ {item.endDate}</>
+                              )}
+                          </>
+                        )}
+                      </Text>
+                    ) : item.startDate ? (
                       <Text style={styles.itemMeta}>
                         {item.startDate}
                         {item.endDate && item.startDate !== item.endDate && (
                           <> ~ {item.endDate}</>
                         )}
                       </Text>
-                    )}
+                    ) : null}
                     <Text style={styles.itemText}>{item.text}</Text>
                   </View>
                 ))}

@@ -4,9 +4,13 @@ export interface ResumeItem {
   startDate?: string;
   endDate?: string;
   review?: string;
+  company?: any;
+  role?: any;
+  companyAddress?: any;
   oldText?: string;
-  companyAddress?: string;
+  companyOrRole?: string;
   degree?: string;
+  GPA?: number;
 }
 
 export interface ResumeSession {
