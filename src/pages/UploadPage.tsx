@@ -20,7 +20,7 @@ import Header from "@/components/ui/header";
 import { LoadingAnimation } from "@/components/ui/loading-animation";
 import {
   createNewResumeFromFile,
-  createNewResumeWithSections,
+  // createNewResumeWithSections,
   getAiReview,
   getResumeFromAI,
   setHasFeedbackResume,
@@ -34,17 +34,17 @@ type UploadMethod = "file" | "text";
 //type TextInputMethod = "paste" | "write";
 type ProcessStatus = "idle" | "uploading" | "reviewing" | "done" | "error";
 
-function slugify(raw: string) {
-  const base = (raw ?? "")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 64);
-  const safe = base || "section";
-  return /^[a-z]/.test(safe) ? safe : `sec-${safe}`;
-}
+// function slugify(raw: string) {
+//   const base = (raw ?? "")
+//     .normalize("NFKD")
+//     .replace(/[\u0300-\u036f]/g, "")
+//     .toLowerCase()
+//     .replace(/[^a-z0-9]+/g, "-")
+//     .replace(/^-+|-+$/g, "")
+//     .slice(0, 64);
+//   const safe = base || "section";
+//   return /^[a-z]/.test(safe) ? safe : `sec-${safe}`;
+// }
 
 const UploadPage: React.FC = () => {
   const [uploadMethod, setUploadMethod] = useState<UploadMethod>("file");
