@@ -4,6 +4,9 @@ export interface ResumeItem {
   startDate?: string;
   endDate?: string;
   review?: string;
+  company?: any;
+  role?: any;
+  companyAddress?: any;
   oldText?: string;
   companyOrRole?: string;
   degree?: string;
