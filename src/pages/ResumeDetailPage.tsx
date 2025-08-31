@@ -242,7 +242,7 @@ function SectionHeader({
             <Input
               value={session.title}
               onChange={(e) => onTitle(e.target.value)}
-              className="text-lg border-gray-400 shadow-sm font-semibold h-9 w-[min(28rem,90vw)] placeholder:text-gray-400"
+              className="text-lg border-gray-400 shadow-sm font-semibold h-9 w-full md:w-[min(28rem,90vw)] placeholder:text-gray-400"
               placeholder="섹션 제목"
             />
           ) : (
@@ -262,7 +262,7 @@ function SectionHeader({
             variant="ghost"
             size="sm"
             onClick={onRemove}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50 items-start"
             title="섹션 삭제"
           >
             <Trash2 className="h-4 w-4" />
@@ -564,7 +564,7 @@ export default function ResumeDetailPage() {
       <Header />
       <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-gray-200 shadow-[0_1px_0_0_rgba(0,0,0,0.02)]">
         <div className="max-w-4xl mx-auto px-6 py-3">
-          <div className="flex items-center justify-between">
+          <div className={`flex ${isEdit ? 'flex-col' : 'flex-row'} md:flex-row items-start md:items-center justify-between`}>
             <Button
               onClick={() => {
                 dispatch(setIsEdit(false));
@@ -577,9 +577,11 @@ export default function ResumeDetailPage() {
               <ArrowLeft className="h-4 w-4 mr-2" /> 목록으로
             </Button>
             <div className="flex items-center gap-3">
-              <Badge>
-                <Star className="h-3 w-3 mr-1" /> {draft.score}점
-              </Badge>
+              {!isEdit && (
+                <Badge>
+                  <Star className="h-3 w-3 mr-1" /> {draft.score}점
+                </Badge>
+              )}
               {!isEdit ? (
                 <Button
                   onClick={() => dispatch(setIsEdit(true))}
