@@ -306,7 +306,13 @@ export default function AnalysisPage() {
                                   "personal-info",
                                   "skills",
                                   "degree",
-                                ].includes(session.key);
+                                  "award",
+                                  "Award",
+                                  "certificate",
+                                  "Certificate",
+                                  "Education",
+                                  "Personal",
+                                ].some((k) => session.key.includes(k));
                                 return (
                                   <div
                                     key={itemIndex}
@@ -320,9 +326,7 @@ export default function AnalysisPage() {
                                           }`
                                     }`}
                                     onClick={() =>
-                                      !isDisabled
-                                        ? setSelectedItem(item)
-                                        : alert("분석하지 않는 항목입니다.")
+                                      !isDisabled ? setSelectedItem(item) : null
                                     }
                                   >
                                     {item.title && (
@@ -413,9 +417,8 @@ export default function AnalysisPage() {
                           <div className="text-sm text-blue-800">
                             <p className="font-medium mb-1">팁:</p>
                             <p>
-                              왼쪽의 텍스트를 클릭하여 더 자세한 피드백을
-                              확인하세요. 개인정보와 학력사항은 분석하지
-                              않습니다.
+                              왼쪽의 텍스트를 클릭하면 프로젝트나 경력 등 중요한
+                              부분만 선별하여 분석한 피드백을 볼 수 있습니다.
                             </p>
                           </div>
                         </div>
