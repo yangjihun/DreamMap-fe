@@ -300,7 +300,6 @@ export default function AnalysisPage() {
                             {session.items.map(
                               (item: ResumeItem, itemIndex: number) => {
                                 const isDisabled = [
-                                  "personal-info",
                                   "education",
                                   "personal_info",
                                   "skills",
