@@ -5,8 +5,9 @@ export interface ResumeItem {
   endDate?: string;
   review?: string;
   oldText?: string;
-  companyAddress?: string;
+  companyOrRole?: string;
   degree?: string;
+  GPA?: number;
 }
 
 export interface ResumeSession {

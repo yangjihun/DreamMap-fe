@@ -274,8 +274,15 @@ export default function AnalysisPage() {
                           </div>
                         </div>
 
-                        {session.title === "개인정보" ? (
-                          // 개인정보 세션인 경우 모든 아이템을 한 카드에 표시
+                        {[
+                          "개인정보",
+                          "기술",
+                          "Skills",
+                          "스킬",
+                          "SKILL",
+                          "PERSONAL INFO",
+                        ].some((k) => session.title.includes(k)) ? (
+                          // 개인정보나 기술 세션인 경우 모든 아이템을 한 카드에 표시
                           <div className="p-5 border-2 border-gray-200 rounded-xl bg-gray-50 ml-12">
                             <div className="space-y-3">
                               {session.items.map(
@@ -290,6 +297,41 @@ export default function AnalysisPage() {
                                     <span className="text-gray-700 flex-1">
                                       {item.text}
                                     </span>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        ) : ["Education", "학력", "EDUCATION"].some((k) =>
+                            session.title.includes(k)
+                          ) ? (
+                          // Education 세션인 경우 학교이름(헤더), 메이저, GPA 형식으로 표시
+                          <div className="p-5 border-2 border-gray-200 rounded-xl bg-gray-50 ml-12">
+                            <div className="space-y-4">
+                              {session.items.map(
+                                (item: ResumeItem, itemIndex: number) => (
+                                  <div key={itemIndex} className="space-y-2">
+                                    <div className="font-semibold text-gray-900 text-lg">
+                                      {item.title}
+                                    </div>
+                                    <div className="font-medium text-gray-700 text-base">
+                                      {item.degree}
+                                      {item.endDate && (
+                                        <span className="text-gray-500 ml-2">
+                                          | {item.endDate}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {item.GPA && (
+                                      <div className="flex items-start gap-2 text-sm">
+                                        <span className="font-medium text-gray-600 min-w-fit">
+                                          GPA:
+                                        </span>
+                                        <span className="text-gray-600 flex-1">
+                                          {item.GPA}
+                                        </span>
+                                      </div>
+                                    )}
                                   </div>
                                 )
                               )}
@@ -336,24 +378,45 @@ export default function AnalysisPage() {
                                     )}
                                     {session.key !== "intro" && (
                                       <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                                        {item.companyAddress && (
-                                          <span>{item.companyAddress}</span>
-                                        )}
-                                        {item.startDate && (
+                                        {item.company ? (
                                           <>
-                                            {item.companyAddress && (
-                                              <span>|</span>
+                                            <span>{item.company}</span>
+                                            {item.startDate && (
+                                              <>
+                                                <span>|</span>
+                                                <span>
+                                                  {item.startDate}
+                                                  {item.endDate &&
+                                                    item.startDate !==
+                                                      item.endDate && (
+                                                      <span>
+                                                        ~ {item.endDate}
+                                                      </span>
+                                                    )}
+                                                </span>
+                                              </>
                                             )}
-                                            <span>
-                                              {item.startDate}
-                                              {item.endDate &&
-                                                item.startDate ===
-                                                  item.endDate && (
-                                                  <span>~ {item.endDate}</span>
-                                                )}
-                                            </span>
                                           </>
-                                        )}
+                                        ) : item.role ? (
+                                          <>
+                                            <span>{item.role}</span>
+                                            {item.startDate && (
+                                              <>
+                                                <span>|</span>
+                                                <span>
+                                                  {item.startDate}
+                                                  {item.endDate &&
+                                                    item.startDate !==
+                                                      item.endDate && (
+                                                      <span>
+                                                        ~ {item.endDate}
+                                                      </span>
+                                                    )}
+                                                </span>
+                                              </>
+                                            )}
+                                          </>
+                                        ) : null}
                                       </div>
                                     )}
                                     <p className="text-gray-700 mb-3 leading-relaxed whitespace-pre-wrap">
