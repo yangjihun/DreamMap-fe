@@ -325,11 +325,9 @@ export default function AnalysisPage() {
                                               : "border-gray-200 bg-white hover:border-blue-300"
                                           }`
                                     }`}
-                                    /*onClick={() =>
-                                      !isDisabled
-                                        ? setSelectedItem(item)
-                                        : alert("분석하지 않는 항목입니다.")
-                                    }*/
+                                    onClick={() =>
+                                      !isDisabled ? setSelectedItem(item) : null
+                                    }
                                   >
                                     {item.title && (
                                       <h4 className="font-semibold text-gray-900 mb-3 text-lg">
