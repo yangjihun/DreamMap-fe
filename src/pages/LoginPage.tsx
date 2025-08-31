@@ -63,6 +63,7 @@ export default function LoginPage() {
       const backendPayload = {
         email: data.email,
         password: data.password,
+        passwordConfirm: data.passwordConfirm,
         name: data.name,
         school: data.school,
         major: data.major,

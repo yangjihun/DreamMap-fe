@@ -33,7 +33,8 @@ interface LoginPayload {
 }
 interface SignupPayload extends LoginPayload {
   name?: string;
-  profile?: any;  //  ?? 수정 필요할까?
+  profile?: any;
+  passwordConfirm?: string
 }
 // 로그인 및 회원가입 API 성공 응답 타입
 interface AuthResponse {
