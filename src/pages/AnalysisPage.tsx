@@ -306,7 +306,13 @@ export default function AnalysisPage() {
                                   "personal-info",
                                   "skills",
                                   "degree",
-                                ].includes(session.key);
+                                  "award",
+                                  "Award",
+                                  "certificate",
+                                  "Certificate",
+                                  "Education",
+                                  "Personal",
+                                ].some((k) => session.key.includes(k));
                                 return (
                                   <div
                                     key={itemIndex}
