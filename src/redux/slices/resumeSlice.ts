@@ -257,16 +257,24 @@ export const patchResume = createAsyncThunk<
 
 export const getResumeFromAI = createAsyncThunk<
   Resume,
-  string,
+  { text: string; resumeTitle: string },
   { rejectValue: string }
->("resume/getResumeFromAI", async (text, { rejectWithValue }) => {
-  try {
-    const res = await api.post(`/gemini/generate/json`, { text });
-    return res.data.data;
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message ?? "이력서 생성 실패");
+>(
+  "resume/getResumeFromAI",
+  async ({ text, resumeTitle }, { rejectWithValue }) => {
+    try {
+      const res = await api.post(`/gemini/generate/json`, {
+        text,
+        resumeTitle,
+      });
+      return res.data.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message ?? "이력서 생성 실패"
+      );
+    }
   }
-});
+);
 
 const resumeSlice = createSlice({
   name: "resume",

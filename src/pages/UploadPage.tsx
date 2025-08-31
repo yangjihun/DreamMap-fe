@@ -134,14 +134,16 @@ const UploadPage: React.FC = () => {
           }
 
           // Create a simple section structure from the full text
-          const result = await dispatch(getResumeFromAI(fullText)).unwrap();
+          const result = await dispatch(
+            getResumeFromAI({ text: fullText, resumeTitle: resumeTitle.trim() })
+          ).unwrap();
 
           setProcessStatus("reviewing");
           await dispatch(getAiReview(result.id));
           dispatch(setHasFeedbackResume(false));
           setProcessStatus("done");
           if (result?.id) navigate(`/analysis/${result.id}`);
-        } else {
+        } /*else {
           // Handle item-by-item writing (existing logic)
           const validSections = sections.filter(
             (s) =>
@@ -198,7 +200,7 @@ const UploadPage: React.FC = () => {
           dispatch(setHasFeedbackResume(false));
           setProcessStatus("done");
           if (result?.id) navigate(`/analysis/${result.id}`);
-        }
+        }*/
       } else {
         if (!selectedFile) {
           window.alert("파일을 선택해주세요.");

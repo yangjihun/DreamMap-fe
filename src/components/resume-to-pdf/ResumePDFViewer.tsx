@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "NotoSansKR",
   },
-  title: {
+  name: {
     fontSize: 22,
     fontWeight: "bold",
     marginBottom: 8,
@@ -93,8 +93,8 @@ export const ResumeDocument = ({ resume }: { resume: Resume }) => {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <View style={styles.title}>
-          <Text style={styles.title}>{resume.title}</Text>
+        <View style={styles.name}>
+          <Text style={styles.name}>{resume.title}</Text>
         </View>
 
         {/* Handle Personal Information section specially */}
