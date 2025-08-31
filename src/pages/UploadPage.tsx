@@ -20,7 +20,7 @@ import Header from "@/components/ui/header";
 import { LoadingAnimation } from "@/components/ui/loading-animation";
 import {
   createNewResumeFromFile,
-  createNewResumeWithSections,
+  // createNewResumeWithSections,
   getAiReview,
   getResumeFromAI,
   setHasFeedbackResume,
@@ -31,25 +31,26 @@ import TextUpload, {
   hasRealContent,
 } from "@/components/textUpload";
 type UploadMethod = "file" | "text";
-type TextInputMethod = "paste" | "write";
+//type TextInputMethod = "paste" | "write";
 type ProcessStatus = "idle" | "uploading" | "reviewing" | "done" | "error";
 
-function slugify(raw: string) {
-  const base = (raw ?? "")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 64);
-  const safe = base || "section";
-  return /^[a-z]/.test(safe) ? safe : `sec-${safe}`;
-}
+// function slugify(raw: string) {
+//   const base = (raw ?? "")
+//     .normalize("NFKD")
+//     .replace(/[\u0300-\u036f]/g, "")
+//     .toLowerCase()
+//     .replace(/[^a-z0-9]+/g, "-")
+//     .replace(/^-+|-+$/g, "")
+//     .slice(0, 64);
+//   const safe = base || "section";
+//   return /^[a-z]/.test(safe) ? safe : `sec-${safe}`;
+// }
 
 const UploadPage: React.FC = () => {
   const [uploadMethod, setUploadMethod] = useState<UploadMethod>("file");
-  const [textInputMethod, setTextInputMethod] =
-    useState<TextInputMethod>("write");
+  // const [textInputMethod, setTextInputMethod] =
+  //   useState<TextInputMethod>("paste");
+  const textInputMethod = "paste";
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [resumeTitle, setResumeTitle] = useState("");
   const [fullText, setFullText] = useState("");
@@ -133,14 +134,16 @@ const UploadPage: React.FC = () => {
           }
 
           // Create a simple section structure from the full text
-          const result = await dispatch(getResumeFromAI(fullText)).unwrap();
+          const result = await dispatch(
+            getResumeFromAI({ text: fullText, resumeTitle: resumeTitle.trim() })
+          ).unwrap();
 
           setProcessStatus("reviewing");
           await dispatch(getAiReview(result.id));
           dispatch(setHasFeedbackResume(false));
           setProcessStatus("done");
           if (result?.id) navigate(`/analysis/${result.id}`);
-        } else {
+        } /*else {
           // Handle item-by-item writing (existing logic)
           const validSections = sections.filter(
             (s) =>
@@ -197,7 +200,7 @@ const UploadPage: React.FC = () => {
           dispatch(setHasFeedbackResume(false));
           setProcessStatus("done");
           if (result?.id) navigate(`/analysis/${result.id}`);
-        }
+        }*/
       } else {
         if (!selectedFile) {
           window.alert("파일을 선택해주세요.");
@@ -332,7 +335,7 @@ const UploadPage: React.FC = () => {
 
               {uploadMethod === "text" && (
                 <>
-                  <div className="mb-6">
+                  {/* <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-3">
                       텍스트 입력 방법
                     </label>
@@ -367,7 +370,7 @@ const UploadPage: React.FC = () => {
                         ? "긴 텍스트나 복사된 이력서를 한 번에 붙여넣을 때 사용하세요"
                         : "섹션별로 세분화하여 이력서를 작성할 때 사용하세요"}
                     </p>
-                  </div>
+                  </div> */}
 
                   {textInputMethod === "paste" ? (
                     <div className="border border-gray-200 rounded-lg p-4">

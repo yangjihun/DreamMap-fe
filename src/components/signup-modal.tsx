@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect  } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
@@ -26,6 +26,7 @@ export interface SignupData {
   location: string;
   desiredJob: string;
   level: string;
+  passwordConfirm?: string;
 }
 
 interface SignupModalProps {
@@ -111,8 +112,7 @@ export default function SignupModal({
   onComplete,
 }: SignupModalProps) {
   // --- 상태(State) ---
-  const [currentStep, setCurrentStep] = useState(0); // 시작 단계를 0으로 변경
-  const [signupData, setSignupData] = useState<SignupData>({
+  const initialSignupData: SignupData = {
     email: "",
     password: "",
     name: "",
@@ -123,9 +123,44 @@ export default function SignupModal({
     location: "",
     desiredJob: "",
     level: "",
-  });
+  };
+
+  const [currentStep, setCurrentStep] = useState(0); // 시작 단계를 0으로 변경
+  const [signupData, setSignupData] = useState<SignupData>(initialSignupData);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [skillInput, setSkillInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  const resetForm = () => {
+    setSignupData(initialSignupData);
+    setConfirmPassword("");
+    setSkillInput("");
+    setError(null);
+    setPasswordError(null);
+    setIsLoading(false);
+    setCurrentStep(0);
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    // 1. 비밀번호 필드에 값이 있고, 6자 미만일 경우
+    if (signupData.password && signupData.password.length < 6) {
+      setPasswordError("비밀번호는 6자 이상이어야 합니다.");
+    // 2. (길이는 통과했고) 확인 필드에 값이 있는데, 두 비밀번호가 다를 경우
+    } else if (confirmPassword && signupData.password !== confirmPassword) {
+      setPasswordError("비밀번호가 일치하지 않습니다.");
+    // 3. 모든 조건을 통과한 경우
+    } else {
+      setPasswordError(null);
+    }
+  }, [signupData.password, confirmPassword]);
 
   if (!isOpen) return null;
 
@@ -170,10 +205,23 @@ export default function SignupModal({
     }
   };
 
-  const handleComplete = () => {
-    if (isStepValid()) {
-      onComplete(signupData);
-      onClose();
+  const handleComplete = async () => {
+    if (!isStepValid()) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await onComplete({
+        ...signupData,
+        passwordConfirm: confirmPassword,
+      });
+      onClose(); // 성공했을 때만 모달을 닫음
+    } catch (err: any) {
+      // 실패 시, 모달 내부에 에러 메시지를 설정
+      setError(err.message || "회원가입 중 오류가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -234,6 +282,9 @@ export default function SignupModal({
                   setSignupData({ ...signupData, password: e.target.value })
                 }
               />
+              {passwordError && passwordError.includes("6자") && (
+                <p className="text-sm text-red-600 mt-1">{passwordError}</p>
+              )}
             </div>
             <div>
               <Label htmlFor="confirmPassword">비밀번호 확인</Label>
@@ -244,6 +295,9 @@ export default function SignupModal({
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
+              {passwordError && passwordError.includes("일치하지") && (
+               <p className="text-sm text-red-600 mt-1">{passwordError}</p>
+              )}
             </div>
           </div>
         );
@@ -426,6 +480,13 @@ export default function SignupModal({
             </div>
           )}
 
+           {/* 에러 메시지를 모달 내부에 표시 */}
+           {error && (
+            <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-sm">
+              {error}
+            </div>
+          )}
+
           {renderStepContent()}
           {useStepSignup ? (
             <div className="flex justify-between pt-4">
@@ -458,14 +519,15 @@ export default function SignupModal({
               </div>
             </div>
           ) : (
+
             <Button
-              onClick={handleComplete}
-              disabled={!isStepValid()}
-              className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg mt-6"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              가입완료
-            </Button>
+                onClick={handleComplete}
+                disabled={!isStepValid() || isLoading}
+                className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg mt-6"
+              >
+                <Sparkles className="w-4 w-4 mr-2" />
+                {isLoading ? "가입 진행 중..." : "가입완료"}
+              </Button>
           )}
         </CardContent>
       </Card>

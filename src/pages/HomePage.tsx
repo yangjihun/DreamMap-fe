@@ -123,10 +123,10 @@ export default function HomePage() {
                 AI 기반 이력서 분석 서비스
               </div>
 
-              <h2 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
-                AI로 완성하는
+              <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+                <span className="whitespace-nowrap">AI로 완성하는</span>
                 <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 whitespace-nowrap">
                   완벽한 이력서
                 </span>
               </h2>
@@ -261,6 +261,7 @@ export default function HomePage() {
               containerClass="pb-4"
               itemClass="px-3"
               arrows
+              autoPlay
             >
               {successStoryData.map((item) => {
                 const color =
@@ -298,7 +299,7 @@ export default function HomePage() {
           </div>
         </div>
         {/* Price Section */}
-        <div className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="mb-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-3xl mb-4 text-gray-900">요금제</h2>

@@ -134,6 +134,7 @@ export default function AnalysisPage() {
       session.items.some((item) => !!item.oldText)
     );
     dispatch(setHasFeedbackResume(hasOldText));
+    console.log("??", resume);
   }, [resume]);
 
   const getSessionIcon = (key: string) => {
@@ -273,49 +274,97 @@ export default function AnalysisPage() {
                           </div>
                         </div>
 
-                        <div className="space-y-3 ml-12">
-                          {session.items.map(
-                            (item: ResumeItem, itemIndex: number) => (
-                              <div
-                                key={itemIndex}
-                                className={`p-5 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${
-                                  selectedItem === item
-                                    ? "border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg"
-                                    : "border-gray-200 bg-white hover:border-blue-300"
-                                }`}
-                                onClick={() => setSelectedItem(item)}
-                              >
-                                {item.title && (
-                                  <h4 className="font-semibold text-gray-900 mb-3 text-lg">
-                                    {item.title}
-                                  </h4>
-                                )}
-                                {session.key !== "intro" && (
-                                  <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                                    {item.companyAddress && (
-                                      <span>{item.companyAddress}</span>
-                                    )}
-                                    {item.startDate && (
-                                      <>
-                                        {item.companyAddress && <span>|</span>}
-                                        <span>
-                                          {item.startDate}
-                                          {item.endDate &&
-                                            item.startDate === item.endDate && (
-                                              <span>~ {item.endDate}</span>
-                                            )}
-                                        </span>
-                                      </>
-                                    )}
+                        {session.title === "개인정보" ? (
+                          // 개인정보 세션인 경우 모든 아이템을 한 카드에 표시
+                          <div className="p-5 border-2 border-gray-200 rounded-xl bg-gray-50 ml-12">
+                            <div className="space-y-3">
+                              {session.items.map(
+                                (item: ResumeItem, itemIndex: number) => (
+                                  <div
+                                    key={itemIndex}
+                                    className="flex items-start gap-2"
+                                  >
+                                    <span className="font-semibold text-gray-700 min-w-fit">
+                                      {item.title}:
+                                    </span>
+                                    <span className="text-gray-700 flex-1">
+                                      {item.text}
+                                    </span>
                                   </div>
-                                )}
-                                <p className="text-gray-700 mb-3 leading-relaxed whitespace-pre-wrap">
-                                  {item.text}
-                                </p>
-                              </div>
-                            )
-                          )}
-                        </div>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          // 일반 세션인 경우 기존 방식으로 표시
+                          <div className="space-y-3 ml-12">
+                            {session.items.map(
+                              (item: ResumeItem, itemIndex: number) => {
+                                const isDisabled = [
+                                  "education",
+                                  "personal_info",
+                                  "personal-info",
+                                  "skills",
+                                  "degree",
+                                  "award",
+                                  "Award",
+                                  "certificate",
+                                  "Certificate",
+                                  "Education",
+                                  "Personal",
+                                ].some((k) => session.key.includes(k));
+                                return (
+                                  <div
+                                    key={itemIndex}
+                                    className={`p-5 border-2 rounded-xl transition-all duration-200 ${
+                                      isDisabled
+                                        ? "cursor-default border-gray-200 bg-gray-50"
+                                        : `cursor-pointer hover:shadow-md hover:scale-[1.02] ${
+                                            selectedItem === item
+                                              ? "border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg"
+                                              : "border-gray-200 bg-white hover:border-blue-300"
+                                          }`
+                                    }`}
+                                    onClick={() =>
+                                      !isDisabled ? setSelectedItem(item) : null
+                                    }
+                                  >
+                                    {item.title && (
+                                      <h4 className="font-semibold text-gray-900 mb-3 text-lg">
+                                        {item.title}
+                                      </h4>
+                                    )}
+                                    {session.key !== "intro" && (
+                                      <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                                        {item.companyAddress && (
+                                          <span>{item.companyAddress}</span>
+                                        )}
+                                        {item.startDate && (
+                                          <>
+                                            {item.companyAddress && (
+                                              <span>|</span>
+                                            )}
+                                            <span>
+                                              {item.startDate}
+                                              {item.endDate &&
+                                                item.startDate ===
+                                                  item.endDate && (
+                                                  <span>~ {item.endDate}</span>
+                                                )}
+                                            </span>
+                                          </>
+                                        )}
+                                      </div>
+                                    )}
+                                    <p className="text-gray-700 mb-3 leading-relaxed whitespace-pre-wrap">
+                                      {item.text}
+                                    </p>
+                                  </div>
+                                );
+                              }
+                            )}
+                          </div>
+                        )}
 
                         {sessionIndex < resume?.sessions?.length - 1 && (
                           <Separator className="my-6" />
@@ -330,87 +379,89 @@ export default function AnalysisPage() {
 
           {/* 리뷰 및 피드백 */}
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  선택된 항목 리뷰
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {selectedItem ? (
-                  <div className="space-y-4">
-                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6">
-                      <div className="flex items-center gap-3 mb-4">
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                        <h4 className="font-semibold text-green-900 text-lg">
-                          {selectedItem.title || "선택된 항목"}
-                        </h4>
-                      </div>
-                      {selectedItem.review ? (
-                        <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-green-100">
-                          <p className="text-green-800 text-sm leading-relaxed whitespace-pre-wrap">
-                            {selectedItem.review}
-                          </p>
+            <div className="sticky top-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5" />
+                    선택된 항목 리뷰
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {selectedItem ? (
+                    <div className="space-y-4">
+                      <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                          <h4 className="font-semibold text-green-900 text-lg">
+                            {selectedItem.title || "선택된 항목"}
+                          </h4>
                         </div>
-                      ) : (
-                        <div className="bg-white/60 rounded-lg p-4 border border-green-100">
-                          <p className="text-green-700 text-sm font-medium">
-                            선택된 항목에 대한 이전 AI 리뷰가 없습니다.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                    <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                      <div className="flex items-start gap-3">
-                        <div className="text-blue-600 text-lg">💡</div>
-                        <div className="text-sm text-blue-800">
-                          <p className="font-medium mb-1">팁:</p>
-                          <p>
-                            왼쪽의 텍스트를를 클릭하여 더 자세한 피드백을
-                            확인하세요.
-                          </p>
+                        {selectedItem.review ? (
+                          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-green-100">
+                            <p className="text-green-800 text-sm leading-relaxed whitespace-pre-wrap">
+                              {selectedItem.review}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="bg-white/60 rounded-lg p-4 border border-green-100">
+                            <p className="text-green-700 text-sm font-medium">
+                              선택된 항목에 대한 이전 AI 리뷰가 없습니다.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                        <div className="flex items-start gap-3">
+                          <div className="text-blue-600 text-lg">💡</div>
+                          <div className="text-sm text-blue-800">
+                            <p className="font-medium mb-1">팁:</p>
+                            <p>
+                              왼쪽의 텍스트를 클릭하면 프로젝트나 경력 등 중요한
+                              부분만 선별하여 분석한 피드백을 볼 수 있습니다.
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-12 text-gray-500">
-                    <div className="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                      <MessageSquare className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <h3 className="font-medium text-gray-700 mb-2">
-                      항목을 선택해주세요
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      왼쪽의 항목을 클릭하여 AI 리뷰를 확인하세요
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  전체 분석 요약
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {resume && (
-                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6">
-                      <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4 border border-purple-100">
-                        <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
-                          {resume.review || "아직 분석된 리뷰가 없습니다."}
-                        </p>
+                  ) : (
+                    <div className="text-center py-12 text-gray-500">
+                      <div className="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                        <MessageSquare className="h-8 w-8 text-gray-400" />
                       </div>
+                      <h3 className="font-medium text-gray-700 mb-2">
+                        항목을 선택해주세요
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        왼쪽의 항목을 클릭하여 AI 리뷰를 확인하세요
+                      </p>
                     </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    전체 분석 요약
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {resume && (
+                      <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6">
+                        <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4 border border-purple-100">
+                          <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                            {resume.review || "아직 분석된 리뷰가 없습니다."}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
