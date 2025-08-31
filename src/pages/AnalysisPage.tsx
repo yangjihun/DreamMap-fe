@@ -273,66 +273,93 @@ export default function AnalysisPage() {
                           </div>
                         </div>
 
-                        <div className="space-y-3 ml-12">
-                          {session.items.map(
-                            (item: ResumeItem, itemIndex: number) => {
-                              const isDisabled = [
-                                "personal-info",
-                                "education",
-                              ].includes(session.key);
-                              return (
-                                <div
-                                  key={itemIndex}
-                                  className={`p-5 border-2 rounded-xl transition-all duration-200 ${
-                                    isDisabled
-                                      ? "cursor-default border-gray-200 bg-gray-50"
-                                      : `cursor-pointer hover:shadow-md hover:scale-[1.02] ${
-                                          selectedItem === item
-                                            ? "border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg"
-                                            : "border-gray-200 bg-white hover:border-blue-300"
-                                        }`
-                                  }`}
-                                  onClick={() =>
-                                    !isDisabled
-                                      ? setSelectedItem(item)
-                                      : alert("분석하지 않는 항목입니다.")
-                                  }
-                                >
-                                  {item.title && (
-                                    <h4 className="font-semibold text-gray-900 mb-3 text-lg">
-                                      {item.title}
-                                    </h4>
-                                  )}
-                                  {session.key !== "intro" && (
-                                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                                      {item.companyAddress && (
-                                        <span>{item.companyAddress}</span>
-                                      )}
-                                      {item.startDate && (
-                                        <>
-                                          {item.companyAddress && (
-                                            <span>|</span>
-                                          )}
-                                          <span>
-                                            {item.startDate}
-                                            {item.endDate &&
-                                              item.startDate ===
-                                                item.endDate && (
-                                                <span>~ {item.endDate}</span>
-                                              )}
-                                          </span>
-                                        </>
-                                      )}
-                                    </div>
-                                  )}
-                                  <p className="text-gray-700 mb-3 leading-relaxed whitespace-pre-wrap">
-                                    {item.text}
-                                  </p>
-                                </div>
-                              );
-                            }
-                          )}
-                        </div>
+                        {session.title === "개인정보" ? (
+                          // 개인정보 세션인 경우 모든 아이템을 한 카드에 표시
+                          <div className="p-5 border-2 border-gray-200 rounded-xl bg-gray-50 ml-12">
+                            <div className="space-y-3">
+                              {session.items.map(
+                                (item: ResumeItem, itemIndex: number) => (
+                                  <div
+                                    key={itemIndex}
+                                    className="flex items-start gap-2"
+                                  >
+                                    <span className="font-semibold text-gray-700 min-w-fit">
+                                      {item.title}:
+                                    </span>
+                                    <span className="text-gray-700 flex-1">
+                                      {item.text}
+                                    </span>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          // 일반 세션인 경우 기존 방식으로 표시
+                          <div className="space-y-3 ml-12">
+                            {session.items.map(
+                              (item: ResumeItem, itemIndex: number) => {
+                                const isDisabled = [
+                                  "personal-info",
+                                  "education",
+                                  "personal_info",
+                                  "skills",
+                                  "degree",
+                                ].includes(session.key);
+                                return (
+                                  <div
+                                    key={itemIndex}
+                                    className={`p-5 border-2 rounded-xl transition-all duration-200 ${
+                                      isDisabled
+                                        ? "cursor-default border-gray-200 bg-gray-50"
+                                        : `cursor-pointer hover:shadow-md hover:scale-[1.02] ${
+                                            selectedItem === item
+                                              ? "border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg"
+                                              : "border-gray-200 bg-white hover:border-blue-300"
+                                          }`
+                                    }`}
+                                    onClick={() =>
+                                      !isDisabled
+                                        ? setSelectedItem(item)
+                                        : alert("분석하지 않는 항목입니다.")
+                                    }
+                                  >
+                                    {item.title && (
+                                      <h4 className="font-semibold text-gray-900 mb-3 text-lg">
+                                        {item.title}
+                                      </h4>
+                                    )}
+                                    {session.key !== "intro" && (
+                                      <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                                        {item.companyAddress && (
+                                          <span>{item.companyAddress}</span>
+                                        )}
+                                        {item.startDate && (
+                                          <>
+                                            {item.companyAddress && (
+                                              <span>|</span>
+                                            )}
+                                            <span>
+                                              {item.startDate}
+                                              {item.endDate &&
+                                                item.startDate ===
+                                                  item.endDate && (
+                                                  <span>~ {item.endDate}</span>
+                                                )}
+                                            </span>
+                                          </>
+                                        )}
+                                      </div>
+                                    )}
+                                    <p className="text-gray-700 mb-3 leading-relaxed whitespace-pre-wrap">
+                                      {item.text}
+                                    </p>
+                                  </div>
+                                );
+                              }
+                            )}
+                          </div>
+                        )}
 
                         {sessionIndex < resume?.sessions?.length - 1 && (
                           <Separator className="my-6" />
